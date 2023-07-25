@@ -5,20 +5,18 @@ from utils.config_reader import read_config
 
 from modules.speech_generation import SpeechGeneration
 from modules.voice_recognition import VoiceRecognition
-from modules.expression_generation import ExpressionGeneration
-from modules.motion_generation import MotionGeneration
+# from modules.expression_generation import ExpressionGeneration
+# from modules.motion_generation import MotionGeneration
 
 from database.mongo_tools import get_db, create_document, read_document, update_document, delete_document
 
 ##引数情報を取得
 config = read_config()
 IP = config.get("Server_Info","Server_ip")
-
 user_input_val = sys.argv[1] if len(sys.argv) > 1 else 'n'
 print("="*100)
 if user_input_val == "y":
     DIALOG_MODE = "console_dialog"
-    
     print("コンソール対話モード")
 elif user_input_val == "n":
     DIALOG_MODE = "robot_dialog"
