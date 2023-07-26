@@ -4,6 +4,17 @@ from pymongo import MongoClient
 from tabulate import tabulate
 
 class MongoDB:
+    """
+    MongoDBデータベースとの接続を管理するクラス。
+
+    このクラスを使用すると、指定したMongoDBデータベースに接続し、
+    データを追加、取得、またはデータベースをリセットすることができます。
+
+    使用例：
+    db = MongoDB('my_database')
+    db.add_to_array('my_collection', 'my_field', 'my_data')
+    db.print_all_tables(['_id', 'my_field'])
+    """
     def __init__(self,db_name):
         self.client = MongoClient('mongodb://db:27017/')
         self.db = self.client[db_name]
@@ -36,6 +47,14 @@ class MongoDB:
         return result.modified_count
 
     def get_unique_collection_name(self):
+        """
+        データベース内で一意のコレクション名を生成します。
+
+        UUIDを使用して一意の識別子を生成し、それがデータベース内の既存のコレクション名と衝突しないことを確認します。
+        
+        Returns:
+        str: 生成された一意のコレクション名。
+        """
         while True:
             unique_id = str(uuid.uuid4())
             if unique_id not in self.db.list_collection_names():
@@ -43,6 +62,12 @@ class MongoDB:
 
 
     def print_all_tables(self, keys):
+        """
+        データベース内の全てのコレクションからデータを取得し、指定されたキーに基づいてそれらを表形式で表示します。
+
+        Parameters:
+        keys (list): 表示したい列のキー（フィールド名）のリスト。
+        """
         # データベース内の全てのコレクション名を取得
         all_collections = self.db.list_collection_names()
 

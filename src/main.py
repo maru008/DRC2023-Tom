@@ -6,10 +6,13 @@ from datetime import datetime
 from utils.config_reader import read_config
 from utils.general_tool import *
 
-from modules.speech_generation import SpeechGeneration
-from modules.voice_recognition import VoiceRecognition
-# from modules.expression_generation import ExpressionGeneration
-# from modules.motion_generation import MotionGeneration
+from ServerModules.speech_generation import SpeechGeneration
+from ServerModules.voice_recognition import VoiceRecognition
+# from ServerModules.expression_generation import ExpressionGeneration
+# from ServerModules.motion_generation import MotionGeneration
+
+from DialogModules.NLGModule import NLG 
+
 
 from database.mongo_tools import MongoDB
 
@@ -26,51 +29,46 @@ elif user_input_val == "n":
     SectionPrint("ロボット対話モード")
 
 
-#データベースの定義
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ データベース準備 +++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
 mongodb = MongoDB('Dialog_system') #クラス呼び出し
 unique_id = mongodb.get_unique_collection_name() #コレクション名の取得
 
-
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
 speech_gen = SpeechGeneration(DIALOG_MODE,IP,config.get("Server_Info","SpeechGenerator_port"))
 voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"))
 # expression_gen = ExpressionGeneration(DIALOG_MODE,IP,)
 # motion_gen = MotionGeneration(DIALOG_MODE,IP,)
 
-
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ LLM準備 +++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
+RobotNLG = NLG(config)
+with open('./DialogModules/Prompts/Dialog_staff.txt', 'r', encoding='utf-8') as f:
+    # ファイルの内容を読み込む
+    ChatGPT_prompt_text = f.read()
+    
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ 対話開始 +++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
 
 while True:
-    input_text = voice_recog.recognize()
+    user_input_text = voice_recog.recognize()
 
-    if input_text in ["終了","quit"]:
+    if user_input_text in ["終了","quit"]:
         break
     
-    speech_gen.speech_generate(input_text)
+    LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,[])
     
-    created_time = datetime.now().isoformat()
-    mongodb.add_to_array(unique_id, 'user_input_text', input_text)
+    speech_gen.speech_generate(LLMresponse_text)
+    
+    mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
+    mongodb.add_to_array(unique_id, 'robot_output_text', LLMresponse_text)
 
 SectionPrint("対話ログ出力")
 # 会話の終了後、全ての会話ログを表示
-keys = ['_id', 'user_input_text']
+keys = ['_id', 'user_input_text',"robot_output_text"]
 mongodb.print_all_tables(keys)
-# 
-# collection = db['my_collection']
-
-# # Create
-# new_data = {'name': 'Alice', 'age': 25}
-# id = create_document(collection, new_data)
-# print(f"Inserted data with id {id}")
-
-# # Read
-# query = {'name': 'Alice'}
-# result = read_document(collection, query)
-# print(f"Read data: {result}")
-
-# # Update
-# new_data = {'age': 26}
-# update_count = update_document(collection, query, new_data)
-# print(f"Updated {update_count} documents")
-
-# # Delete
-# delete_count = delete_document(collection, query)
-# print(f"Deleted {delete_count} documents")

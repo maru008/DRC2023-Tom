@@ -17,7 +17,6 @@ class SpeechGeneration:
         self.sock.send(command_ln.encode('utf-8'))
 
     def speech_generate(self, text):
-        text += "ってなんですか"
         if self.DIALOG_MODE == "robot_dialog":
             command_dict = {
                 "engine": "POLLY-SSML",
