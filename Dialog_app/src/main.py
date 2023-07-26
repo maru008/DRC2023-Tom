@@ -23,14 +23,16 @@ from database.mongo_tools import MongoDB
 ##引数情報を取得
 config = read_config()
 IP = config.get("Server_Info","Server_ip")
-user_input_val = sys.argv[1] if len(sys.argv) > 1 else 'n'
-
+user_input_val = sys.argv[1]
 if user_input_val == "y":
     DIALOG_MODE = "console_dialog"
     SectionPrint("コンソール対話モード")
 elif user_input_val == "n":
     DIALOG_MODE = "robot_dialog"
     SectionPrint("ロボット対話モード")
+else:
+    sys.exit('正しく入力してください')
+    
 
 
 #===================================================================================================
@@ -60,20 +62,33 @@ with open(Dialog_prompt_path, 'r', encoding='utf-8') as f:
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 対話開始 +++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-
+speech_gen.speech_generate("こんにちは，旅行代理店ロボットのしょうこです．なんでも聞いてください．")
+user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
+dilognum = 0
 while True:
+    print(f"{dilognum}:音声認識開始")
     user_input_text = voice_recog.recognize()
-
-    if user_input_text in ["終了","quit"]:
+    print(f"{dilognum}:音声認識終了")
+    user_input_log.append({"role": "user", "content":user_input_text})
+    if user_input_text in ["終了","quit",":q"]:
         break
     
-    LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,[])
+    dilognum +=1
+    
+    print(f"{dilognum}:ロボット発話開始")
+    LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
+    user_input_log.append({"role": "assistant", "content":LLMresponse_text})
     
     speech_gen.speech_generate(LLMresponse_text)
-    send_data('nlu_server_app',12345,LLMresponse_text)
+    print(f"{dilognum}:ロボット発話終了")
+    #バックエンドサーバに送る
+    # send_data('nlu_server_app',12345,LLMresponse_text)
+    
     mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
     mongodb.add_to_array(unique_id, 'robot_output_text', LLMresponse_text)
-
+    dilognum +=1
+    
+    
 SectionPrint("対話ログ出力")
 # 会話の終了後、全ての会話ログを表示
 keys = ['_id', 'user_input_text',"robot_output_text"]
