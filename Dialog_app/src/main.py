@@ -1,10 +1,12 @@
 # main.py
+import os
 import sys
 from datetime import datetime
 
 
 from utils.config_reader import read_config
 from utils.general_tool import *
+from utils.TCPserver import *
 
 from ServerModules.speech_generation import SpeechGeneration
 from ServerModules.voice_recognition import VoiceRecognition
@@ -15,6 +17,8 @@ from DialogModules.NLGModule import NLG
 
 
 from database.mongo_tools import MongoDB
+
+
 
 ##引数情報を取得
 config = read_config()
@@ -47,7 +51,9 @@ voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRe
 # +++++++++++++++++++++++++++++++ LLM準備 +++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 RobotNLG = NLG(config)
-with open('./DialogModules/Prompts/Dialog_staff.txt', 'r', encoding='utf-8') as f:
+script_dir = os.path.dirname(os.path.realpath(__file__))
+Dialog_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/Dialog_staff.txt")
+with open(Dialog_prompt_path, 'r', encoding='utf-8') as f:
     # ファイルの内容を読み込む
     ChatGPT_prompt_text = f.read()
     
@@ -64,7 +70,7 @@ while True:
     LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,[])
     
     speech_gen.speech_generate(LLMresponse_text)
-    
+    send_data('nlu_server_app',12345,LLMresponse_text)
     mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
     mongodb.add_to_array(unique_id, 'robot_output_text', LLMresponse_text)
 

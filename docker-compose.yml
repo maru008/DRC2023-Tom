@@ -1,12 +1,22 @@
-# docker-compose.yml
-version: '3.8'
+version: '3'
 services:
-  app:
-    build: .
-    volumes:
-      - ./config.ini:/config.ini
-      - ./src:/app
-    depends_on:
-      - db
   db:
     image: mongo
+    volumes:
+      - ./MongoDB:/data/db
+    ports:
+      - "27017:27017"
+  
+  dialog_app:
+    build: ./Dialog_app
+    volumes:
+      - ./Dialog_app:/usr/src/app
+    depends_on:
+      - db
+    
+  nlu_server_app:
+    build: ./NLUServer_app
+    volumes:
+      - ./NLUServer_app:/usr/src/app
+    depends_on:
+      - db
