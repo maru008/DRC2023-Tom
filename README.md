@@ -13,11 +13,11 @@ APIキーやサーバホストを各自の設定ファイルに作成する．
 形式は以下.(適宜変更する)
 ```
 [API_Key]
-OpenAI = "*************"
-RURUBU = "*************"
+OpenAI = *************
+RURUBU = *************
 
 [Server_Info]
-Server_ip = "192.168.2.213"
+Server_ip = 192.168.2.213
 SpeechRecognition_port = 8888
 SpeechGenerator_port = 3456
 RobotExpressionController_port = 20000
