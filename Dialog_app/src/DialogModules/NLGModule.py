@@ -38,3 +38,6 @@ class NLG:
     def ChatGPT(self,new_message_text,settings_text,past_messages):
         response_message_text, past_messages = self.completion("gpt-3.5-turbo",new_message_text,settings_text,past_messages)
         return response_message_text
+    def GPT4(self,new_message_text,settings_text,past_messages):
+        response_message_text, past_messages = self.completion("gpt-4",new_message_text,settings_text,past_messages)
+        return response_message_text

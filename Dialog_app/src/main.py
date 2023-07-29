@@ -5,8 +5,8 @@ from datetime import datetime
 
 
 from utils.config_reader import read_config
-from utils.general_tool import *
-from utils.TCPserver import *
+from utils.general_tool import SectionPrint
+from utils.TCPserver import SocketConnection
 
 from ServerModules.speech_generation import SpeechGeneration
 from ServerModules.voice_recognition import VoiceRecognition
@@ -17,7 +17,6 @@ from DialogModules.NLGModule import NLG
 
 
 from database.mongo_tools import MongoDB
-
 
 
 ##引数情報を取得
@@ -42,7 +41,7 @@ mongodb = MongoDB('Dialog_system') #クラス呼び出し
 unique_id = mongodb.get_unique_collection_name() #コレクション名の取得
 
 #===================================================================================================
-# +++++++++++++++++++++++++++++++ サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++
+# +++++++++++++++++++++++++++++++ ロボットサーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 speech_gen = SpeechGeneration(DIALOG_MODE,IP,config.get("Server_Info","SpeechGenerator_port"))
 voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"))
@@ -50,7 +49,12 @@ voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRe
 # motion_gen = MotionGeneration(DIALOG_MODE,IP,)
 
 #===================================================================================================
-# +++++++++++++++++++++++++++++++ LLM準備 +++++++++++++++++++++++++++++++++++++++++++++++
+# +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
+socket_conn = SocketConnection('localhost', 12345) 
+
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ フロントLLM準備 +++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 RobotNLG = NLG(config)
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -64,29 +68,28 @@ with open(Dialog_prompt_path, 'r', encoding='utf-8') as f:
 #===================================================================================================
 speech_gen.speech_generate("こんにちは，旅行代理店ロボットのしょうこです．なんでも聞いてください．")
 user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
-dilognum = 0
+
 while True:
-    print(f"{dilognum}:音声認識開始")
+    # print(f"{dilognum}:音声認識開始")
     user_input_text = voice_recog.recognize()
-    print(f"{dilognum}:音声認識終了")
+    # print(f"{dilognum}:音声認識終了")
     user_input_log.append({"role": "user", "content":user_input_text})
     if user_input_text in ["終了","quit",":q"]:
         break
+    #バックエンドサーバに送る
+    socket_conn.send_data(user_input_text)
+    mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
     
-    dilognum +=1
-    
-    print(f"{dilognum}:ロボット発話開始")
-    LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
+    # LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
+    LLMresponse_text = RobotNLG.GPT4(user_input_text,ChatGPT_prompt_text,user_input_log)
     user_input_log.append({"role": "assistant", "content":LLMresponse_text})
     
-    speech_gen.speech_generate(LLMresponse_text)
-    print(f"{dilognum}:ロボット発話終了")
-    #バックエンドサーバに送る
-    # send_data('nlu_server_app',12345,LLMresponse_text)
     
-    mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
+    speech_gen.speech_generate(LLMresponse_text)
+    
+    
+    
     mongodb.add_to_array(unique_id, 'robot_output_text', LLMresponse_text)
-    dilognum +=1
     
     
 SectionPrint("対話ログ出力")

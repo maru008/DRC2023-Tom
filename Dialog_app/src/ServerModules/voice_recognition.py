@@ -11,26 +11,32 @@ class VoiceRecognition:
         self.port = int(port)
 
     def recognize(self):
+        confidence_threshold = 0.5  # Set your desired threshold here
+
         if self.DIALOG_MODE == "robot_dialog":
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((self.ip, self.port))
-            while True:  # Keep looping until a non-empty result is obtained
+            while True:
                 self.listen_once()
                 while True:
                     if not self.received_stack:
                         time.sleep(0.1)
                         continue
                     result = self.received_stack.pop(0)
-                    if result["type"] in ["final", "failed"] and result["user_utterance"].strip() != "":
+                    print(result)
+                    if result["type"] == "silent":
+                        self.received_stack.clear()
                         break
-                    elif result["type"] == "silent":
-                        self.received_stack.clear()  # Clear the received_stack
-                        break  # Break the inner loop to restart listen_once
-                if result["type"] in ["final", "failed"] and result["user_utterance"].strip() != "":
-                    break
-            print(result)
+                    if result["type"] in ["final", "failed"]:
+                        if result["user_utterance"] != "" and result["confidence"] >= confidence_threshold: 
+                            break
+                if result["type"] in ["final", "failed"]:
+                    if result["user_utterance"] != "" and result["confidence"] >= confidence_threshold: 
+                        break
             self.sock.close()
+
             return result["user_utterance"]
+
         elif self.DIALOG_MODE == "console_dialog":
             usr_input_text = str(input("user:"))
             return usr_input_text
@@ -67,7 +73,7 @@ class VoiceRecognition:
                     break
         except socket.timeout:
             self.received_stack.append( {"type": "silent", "user_utterance": "", "confidence": -1} )
-        self.stop_listen()
+        self.stop_listen()  # この行をコメントアウトまたは削除
 
     def start_listen(self):
         command = "start"

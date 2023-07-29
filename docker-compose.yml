@@ -6,17 +6,12 @@ services:
       - ./MongoDB:/data/db
     ports:
       - "27017:27017"
-  
-  dialog_app:
-    build: ./Dialog_app
-    volumes:
-      - ./Dialog_app:/usr/src/app
-    depends_on:
-      - db
     
   nlu_server_app:
     build: ./NLUServer_app
     volumes:
       - ./NLUServer_app:/usr/src/app
+    ports:
+      - "12345:12345"
     depends_on:
       - db

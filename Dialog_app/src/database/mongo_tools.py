@@ -16,7 +16,7 @@ class MongoDB:
     db.print_all_tables(['_id', 'my_field'])
     """
     def __init__(self,db_name):
-        self.client = MongoClient('mongodb://db:27017/')
+        self.client = MongoClient('mongodb://localhost:27017/')
         self.db = self.client[db_name]
     
     def reset_database(self):
@@ -84,7 +84,16 @@ class MongoDB:
         # データが空でないことを確認
         if all_data:
             # データを指定されたキーのみを含むようにフィルタリング
-            filtered_data = [{key: doc.get(key, None) for key in keys} for doc in all_data]
+            filtered_data = []
+            for doc in all_data:
+                for key in keys:
+                    if isinstance(doc.get(key), list):
+                        for item in doc.get(key):
+                            new_doc = {k: doc.get(k, None) if k != key else item for k in keys}
+                            filtered_data.append(new_doc)
+                    else:
+                        new_doc = {k: doc.get(k, None) for k in keys}
+                        filtered_data.append(new_doc)
 
             table = tabulate(filtered_data, headers="keys", tablefmt="grid")
             print(table)
