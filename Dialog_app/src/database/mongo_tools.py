@@ -2,6 +2,7 @@
 import uuid
 from pymongo import MongoClient
 from tabulate import tabulate
+import pandas as pd
 
 class MongoDB:
     """
@@ -59,8 +60,7 @@ class MongoDB:
             unique_id = str(uuid.uuid4())
             if unique_id not in self.db.list_collection_names():
                 return unique_id
-
-
+            
     def print_all_tables(self, keys):
         """
         データベース内の全てのコレクションからデータを取得し、指定されたキーに基づいてそれらを表形式で表示します。
@@ -86,16 +86,15 @@ class MongoDB:
             # データを指定されたキーのみを含むようにフィルタリング
             filtered_data = []
             for doc in all_data:
-                for key in keys:
-                    if isinstance(doc.get(key), list):
-                        for item in doc.get(key):
-                            new_doc = {k: doc.get(k, None) if k != key else item for k in keys}
-                            filtered_data.append(new_doc)
-                    else:
-                        new_doc = {k: doc.get(k, None) for k in keys}
+                if isinstance(doc.get(keys[1]), list) and isinstance(doc.get(keys[2]), list):
+                    for i in range(len(doc.get(keys[1]))):
+                        new_doc = {keys[0]: doc.get(keys[0], None), keys[1]: doc.get(keys[1])[i], keys[2]: doc.get(keys[2])[i]}
                         filtered_data.append(new_doc)
+                else:
+                    new_doc = {k: doc.get(k, None) for k in keys}
+                    filtered_data.append(new_doc)
 
-            table = tabulate(filtered_data, headers="keys", tablefmt="grid")
-            print(table)
+            df = pd.DataFrame(filtered_data)
+            print(df.to_string(index=False))
         else:
             print("No data found in the database.")

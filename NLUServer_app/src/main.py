@@ -1,20 +1,12 @@
-import socket
+from utils.receive_data import Server
 
-print("Starting server...")
-host = '0.0.0.0'  # Listen on all interfaces
-port = 12345  # Define your port number
+server = Server()
+server.start_server()
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((host, port))
-s.listen()
-print(f"Server started on {host}:{port}. Waiting for connections...")
-while True:  # This line is added to accept connections continuously
-    conn, addr = s.accept()
-    with conn:
-        print(f'Connected by {addr[0]}:{addr[1]}')
-
-        while True:
-            data = conn.recv(1024)
-            if not data:
-                break
-            print(f"Received data: {data.decode()}", flush=True)
+while True:
+    received_data = server.accept_connections()
+    if received_data is not None:
+        # ここで受け取ったデータを使用できます
+        received_data_ls = eval(received_data)
+        print("ID:",received_data_ls[0], flush=True)
+        print("text:",received_data_ls[1], flush=True)

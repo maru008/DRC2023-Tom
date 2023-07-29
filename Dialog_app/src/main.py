@@ -66,7 +66,7 @@ with open(Dialog_prompt_path, 'r', encoding='utf-8') as f:
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 対話開始 +++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-speech_gen.speech_generate("こんにちは，旅行代理店ロボットのしょうこです．なんでも聞いてください．")
+speech_gen.speech_generate("最強旅行代理店ロボットです．なんでも聞いてください．")
 user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
 
 while True:
@@ -76,23 +76,21 @@ while True:
     user_input_log.append({"role": "user", "content":user_input_text})
     if user_input_text in ["終了","quit",":q"]:
         break
-    #バックエンドサーバに送る
-    socket_conn.send_data(user_input_text)
-    mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
     
-    # LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
-    LLMresponse_text = RobotNLG.GPT4(user_input_text,ChatGPT_prompt_text,user_input_log)
+    #バックエンドサーバにIDと文字列を送る
+    socket_conn.send_data(str([unique_id,user_input_text]))
+    mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
+
+    LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
     user_input_log.append({"role": "assistant", "content":LLMresponse_text})
     
     
     speech_gen.speech_generate(LLMresponse_text)
     
-    
-    
     mongodb.add_to_array(unique_id, 'robot_output_text', LLMresponse_text)
     
-    
+
 SectionPrint("対話ログ出力")
 # 会話の終了後、全ての会話ログを表示
-keys = ['_id', 'user_input_text',"robot_output_text"]
+keys = ['_id', 'user_input_text']
 mongodb.print_all_tables(keys)
