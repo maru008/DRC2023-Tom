@@ -7,8 +7,8 @@ in DRC2023, Team Tom
 ---
 ## 設定項目
 APIキーやサーバホストを各自の設定ファイルに作成する．
-以下のパスのようにconf.iniファイルを作成する．
-- conf.ini
+以下のパスのようにconfig.iniファイルを作成する．
+- config.ini
   
 形式は以下.(適宜変更する)
 ```
@@ -26,7 +26,8 @@ FaceRecognition_port = 4500
 ```
 
 実行は以下のシェルファイルを実行する．
-- start_docker.sh
+- start_server.sh
+- start_dialog.sh
   
 コマンド対話モードを使用しますか？(y/n)を聞かれるので，会話だけをしたい時はy．サーバ接続をして試したい時はnを入力する．
 
@@ -35,22 +36,52 @@ FaceRecognition_port = 4500
 このプロジェクトは以下の構成で作成されている．
 ```
 .
-├── Dockerfile
+├── Dialog_app
+│   ├── requirements.txt
+│   └── src
+│       ├── DialogModules
+│       │   ├── NLGModule.py
+│       │   └── Prompts
+│       │       └── Dialog_staff.txt
+│       ├── ServerModules
+│       │   ├── expression_generation.py
+│       │   ├── motion_generation.py
+│       │   ├── speech_generation.py
+│       │   └── voice_recognition.py
+│       ├── database
+│       │   └── mongo_tools.py
+│       ├── main.py
+│       └── utils
+│           ├── TCPserver.py
+│           ├── config_reader.py
+│           └── general_tool.py
 ├── LICENSE
+├── MongoDB
+│   ├──...
+│
+├── NLUServer_app
+│   ├── Dockerfile
+│   ├── config.ini
+│   ├── requirements.txt
+│   └── src
+│       ├── NLUModule
+│       │   ├── Prompts
+│       │   │   └── GPT4_NLU.txt
+│       │   ├── Text_NLU_module.py
+│       │   └── __pycache__
+│       │       └── Text_NLU_module.cpython-39.pyc
+│       ├── main.py
+│       └── utils
+│           ├── __pycache__
+│           │   ├── config_reader.cpython-39.pyc
+│           │   ├── mongodb_tool.cpython-39.pyc
+│           │   └── receive_data.cpython-39.pyc
+│           ├── config_reader.py
+│           ├── mongodb_tool.py
+│           └── receive_data.py
 ├── README.md
 ├── config.ini
 ├── docker-compose.yml
-├── requirements.txt
-├── src
-│   ├── database                        #データベースに関するモジュール群
-│   │   └── mongo_tools.py
-│   ├── main.py
-│   ├── modules                         #モジュール群
-│   │   ├── expression_generation.py
-│   │   ├── motion_generation.py
-│   │   ├── speech_generation.py
-│   │   └── voice_recognition.py
-│   └── utils
-│       └── config_reader.py
-└── start_docker.sh                     #main.pyを実行するファイル
+├── start_dialog.sh
+└── start_server.sh
 ```
