@@ -1,8 +1,9 @@
 # 個人的なファイル
 config.ini
+MongoDB/
 
 
-#以降pythonデフォルト
+#以降pythonデフォルト==============================
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
