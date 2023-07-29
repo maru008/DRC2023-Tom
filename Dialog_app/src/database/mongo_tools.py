@@ -3,6 +3,7 @@ import uuid
 from pymongo import MongoClient
 from tabulate import tabulate
 import pandas as pd
+import pprint
 
 class MongoDB:
     """
@@ -19,7 +20,7 @@ class MongoDB:
     def __init__(self,db_name):
         self.client = MongoClient('mongodb://localhost:27017/')
         self.db = self.client[db_name]
-    
+        
     def reset_database(self):
         """
         このデータベースの全てのコレクションを削除し、データベースをリセットします。
@@ -59,42 +60,44 @@ class MongoDB:
         while True:
             unique_id = str(uuid.uuid4())
             if unique_id not in self.db.list_collection_names():
+                self.collection = self.db[unique_id]
+                user_id = str(uuid.uuid4())
+                self.collection.insert_one({'user_id': user_id})
                 return unique_id
-            
-    def print_all_tables(self, keys):
+    
+    def print_collection(self, collection_name):
+        collection = self.db[collection_name]
+        documents = collection.find()
+        for document in documents:
+            pprint.pprint(document)
+
+    
+    def print_all_tables(self, now_id, keys):
         """
-        データベース内の全てのコレクションからデータを取得し、指定されたキーに基づいてそれらを表形式で表示します。
+        データベース内の指定されたIDのコレクションからデータを取得し、指定されたキーに基づいてそれらを表形式で表示します。
 
         Parameters:
+        now_id (ObjectId): 取得したいドキュメントのID。
         keys (list): 表示したい列のキー（フィールド名）のリスト。
         """
-        # データベース内の全てのコレクション名を取得
-        all_collections = self.db.list_collection_names()
-
-        # 全てのコレクションからデータを取得して1つのリストに結合
-        all_data = []
-        for collection_name in all_collections:
-            collection = self.db[collection_name]
-            documents = collection.find()
-            
-            # 全てのドキュメントをリストに変換
-            data = [doc for doc in documents]
-            all_data.extend(data)
+        # IDに一致するドキュメントを取得
+        collection = self.db[str(now_id)]
+        document = collection.find_one({'_id': now_id})
 
         # データが空でないことを確認
-        if all_data:
+        if document:
             # データを指定されたキーのみを含むようにフィルタリング
             filtered_data = []
-            for doc in all_data:
-                if isinstance(doc.get(keys[1]), list) and isinstance(doc.get(keys[2]), list):
-                    for i in range(len(doc.get(keys[1]))):
-                        new_doc = {keys[0]: doc.get(keys[0], None), keys[1]: doc.get(keys[1])[i], keys[2]: doc.get(keys[2])[i]}
-                        filtered_data.append(new_doc)
-                else:
-                    new_doc = {k: doc.get(k, None) for k in keys}
-                    filtered_data.append(new_doc)
-
-            df = pd.DataFrame(filtered_data)
+            for key in keys:
+                value = document.get(key, None)
+                if isinstance(value, list):
+                    # リストの場合、その各要素を並べる
+                    value = " ".join(map(str, value))
+                filtered_data.append(value)
+            
+            # DataFrameで表示
+            df = pd.DataFrame([filtered_data], columns=keys)
             print(df.to_string(index=False))
         else:
             print("No data found in the database.")
+

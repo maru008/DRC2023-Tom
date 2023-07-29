@@ -24,14 +24,15 @@ class VoiceRecognition:
                         continue
                     result = self.received_stack.pop(0)
                     print(result)
-                    if result["type"] == "silent":
+                    if result["type"] == "silent" or (result["type"] == "final" and result["user_utterance"] == "" and result["confidence"] < confidence_threshold):
                         self.received_stack.clear()
                         break
                     if result["type"] in ["final", "failed"]:
-                        if result["user_utterance"] != "" and result["confidence"] >= confidence_threshold: 
+                        if result["user_utterance"] != "" and result["confidence"] >= confidence_threshold:
                             break
+
                 if result["type"] in ["final", "failed"]:
-                    if result["user_utterance"] != "" and result["confidence"] >= confidence_threshold: 
+                    if result["user_utterance"] != "" and result["confidence"] >= confidence_threshold:
                         break
             self.sock.close()
 
@@ -50,10 +51,12 @@ class VoiceRecognition:
             received_str = received_data.decode("utf-8")
         except UnicodeDecodeError:
             received_str = "failed:\n"
+
+        result_str = received_str.split("\n")[0]  # Only get the first line
+
         if received_str.startswith("startrecog:"):
             return {"type": "start", "user_utterance": "", "confidence": -1}
         elif received_str.startswith("interimresult:"):
-            result_str, _ = received_str.split("\n")
             return {"type": "interim", "user_utterance": result_str, "confidence": -1}
         elif received_str.startswith("result:"):
             result_str, confidence_str, _ = received_str.split("\n")

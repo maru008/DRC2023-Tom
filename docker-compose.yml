@@ -11,6 +11,7 @@ services:
     build: ./NLUServer_app
     volumes:
       - ./NLUServer_app:/usr/src/app
+      - ./config.ini:/usr/src/app/config.ini
     ports:
       - "12345:12345"
     depends_on:

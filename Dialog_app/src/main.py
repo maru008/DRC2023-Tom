@@ -39,6 +39,7 @@ else:
 #===================================================================================================
 mongodb = MongoDB('Dialog_system') #クラス呼び出し
 unique_id = mongodb.get_unique_collection_name() #コレクション名の取得
+#コレクション名を格納
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ロボットサーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++
@@ -72,13 +73,13 @@ user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
 while True:
     # print(f"{dilognum}:音声認識開始")
     user_input_text = voice_recog.recognize()
-    # print(f"{dilognum}:音声認識終了")
+    print(user_input_text)
     user_input_log.append({"role": "user", "content":user_input_text})
+    socket_conn.send_data(str([unique_id,user_input_text]))
     if user_input_text in ["終了","quit",":q"]:
         break
     
     #バックエンドサーバにIDと文字列を送る
-    socket_conn.send_data(str([unique_id,user_input_text]))
     mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
 
     LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
@@ -91,6 +92,5 @@ while True:
     
 
 SectionPrint("対話ログ出力")
-# 会話の終了後、全ての会話ログを表示
-keys = ['_id', 'user_input_text']
-mongodb.print_all_tables(keys)
+# # 会話の終了後、作成されたMongoDBのデータを出力
+mongodb.print_collection(str(unique_id))
