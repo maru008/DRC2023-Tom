@@ -5,7 +5,7 @@ from utils.config_reader import read_config
 from utils.mongodb_tool import MongoDB
 
 from NLUModule.Text_NLU_module import NLU
-
+print("start NLU Server !", flush=True)
 server = Server()
 server.start_server()
 
