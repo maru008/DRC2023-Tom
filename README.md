@@ -2,8 +2,20 @@
 in DRC2023, Team Tom
 
 ## 環境
+- Python
 - Docker
+### 環境設定
+対話メインプログラムはpythonを用います．
+仮想環境を作成することを推奨．
+```
+python -m venv .venv #.venvにすることでgitにコミットされない
+```
 
+仮想環境に入る
+```
+source .venv/bin/activate
+```
+対話プログラム（start_dialog.sh）は以降この環境で実行．
 ---
 ## 設定項目
 APIキーやサーバホストを各自の設定ファイルに作成する．
@@ -72,10 +84,6 @@ FaceRecognition_port = 4500
 │       │       └── Text_NLU_module.cpython-39.pyc
 │       ├── main.py
 │       └── utils
-│           ├── __pycache__
-│           │   ├── config_reader.cpython-39.pyc
-│           │   ├── mongodb_tool.cpython-39.pyc
-│           │   └── receive_data.cpython-39.pyc
 │           ├── config_reader.py
 │           ├── mongodb_tool.py
 │           └── receive_data.py
