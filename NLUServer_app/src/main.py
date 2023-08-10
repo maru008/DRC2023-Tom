@@ -36,5 +36,6 @@ while True:
             res = text_nlu.NLU_GPT4(received_text,prompt_text,input_text_ls)
             input_text_ls.append({"role": "user", "content":received_text})
             print(res, flush=True)
+            print("="*100)
             mongo_db.update_document(str(ID), res)
         
