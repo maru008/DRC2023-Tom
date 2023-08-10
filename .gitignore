@@ -1,7 +1,7 @@
 # 個人的なファイル
 config.ini
 MongoDB/
-
+RURUBU_app/data/RURUBU_results_KyotoCity.json
 
 #以降pythonデフォルト==============================
 # Byte-compiled / optimized / DLL files
