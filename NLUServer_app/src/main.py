@@ -1,4 +1,5 @@
 import os
+import json
 
 from utils.receive_data import Server
 from utils.config_reader import read_config
@@ -36,6 +37,8 @@ while True:
             res = text_nlu.NLU_GPT4(received_text,prompt_text,input_text_ls)
             input_text_ls.append({"role": "user", "content":received_text})
             print(res, flush=True)
-            print("="*100)
-            mongo_db.update_document(str(ID), res)
+            try:
+                mongo_db.update_document(str(ID), res)
+            except json.JSONDecodeError as e:  # JSONデコードエラーをキャッチ
+                print("エラー: JSONデコードに失敗しました。", str(e), flush=True)
         
