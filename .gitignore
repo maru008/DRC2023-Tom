@@ -2,8 +2,8 @@
 config.ini
 MongoDB/
 CityGraph_app/data/output_data/RURUBU_results_KyotoCity.json
-CityGraph_app/data/output_data/stations_geocode.json
-
+CityGraph_app/data/output_data/KyotoCity_Stations_geocode.json
+CityGraph_app/data/output_data/RURUBU_KyotoCity_TraficInfo.json
 
 #以降pythonデフォルト==============================
 # Byte-compiled / optimized / DLL files
