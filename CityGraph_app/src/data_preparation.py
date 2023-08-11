@@ -6,6 +6,7 @@ import configparser
 import requests
 import json
 import os
+import re
 import googlemaps
 
 from NLUModule.NLU_text import NLU
@@ -63,11 +64,89 @@ else:
     # JSONファイルとして保存
     with open(RURUBU_save_path, 'w',encoding='utf-8') as file:
         json.dump(all_results, file, ensure_ascii=False, indent=4)
-
     print(f"保存された観光地数：{len(all_results)}")
+    
+# =====================================================================================================================
+#るるぶAPIから取り出された観光地データから駅名を取り出して，緯度経度を計算，データを保存する
+# =====================================================================================================================
+Station_JSON_save_path = os.path.join(output_data_path, 'KyotoCity_Stations_Info.json')
+if os.path.exists(Station_JSON_save_path):
+    print("RURUBUAPIとGoogleAPIから取得した最寄り駅一覧テキストファイルがすでに存在します。スキップします。")
+else:
+    gmaps = googlemaps.Client(key=GOOGLE_API_KEY)
+    with open(RURUBU_save_path, 'r') as file:
+        RURUBU_res_data = json.load(file)
+    station_dict_ls = []
+    done_stationCode_ls = []
+    for spot_i in tqdm(RURUBU_res_data,total=len(RURUBU_res_data),desc="get Station Name and Geocode"):
+        if 'Station' not in spot_i or 'Name' not in spot_i['Station']:
+            continue
+        station_dict = {}
+        station_code = spot_i['Station']["Code"]
+        if station_code not in done_stationCode_ls:
+            done_stationCode_ls.append(station_code)
+            station_name = spot_i['Station']["Name"]
+            station_name = re.sub(r'\(.*?\)', '', station_name)
+            if not station_name.endswith("駅"):
+                station_name += "駅"
+            station_dict["Station_Code"] = station_code
+            station_dict["Station_Name"] = station_name
+            query = station_name + ", Kyoto, Japan"
+            
+            # Geocoding APIを呼び出し
+            geocode_result = gmaps.geocode(query)
+            
+            lat = geocode_result[0]['geometry']['location']['lat']
+            lng = geocode_result[0]['geometry']['location']['lng']
+            
+            station_dict["latitude"] = lat
+            station_dict['longitude'] = lng
+            station_dict_ls.append(station_dict)
+            
+    #沿線データにあるものを追加していく．
+    station_info_by_lat_long = {(str(s["latitude"]), str(s["longitude"])): s for s in station_dict_ls}
+    
+    with open('../data/preparation_data/KyotoCity_TrainMap.json', 'r', encoding='utf-8') as file:
+        train_map = json.load(file)
+
+    # KyotoCity_TrainMap.jsonの各駅について緯度経度を計算
+    for line_name, stations in tqdm(train_map.items(),total=len(train_map.items()),desc="get Station Name and Geocode from trainMap"):
+        for station_name in stations:
+            query = station_name + ", Kyoto, Japan"
+            # Geocoding APIを呼び出し
+            geocode_result = gmaps.geocode(query)
+            
+            latitude = geocode_result[0]['geometry']['location']['lat']
+            longitude = geocode_result[0]['geometry']['location']['lng']
+            key = (str(latitude), str(longitude))
+            
+            # 緯度経度が既にKyotoCity_Stations_Info.jsonに存在する場合
+            if key in station_info_by_lat_long:
+                station = station_info_by_lat_long[(str(latitude), str(longitude))]
+                if "lines" not in station:
+                    station["lines"] = []
+                if line_name not in station["lines"]:
+                    station["lines"].append(line_name)
+            else:
+                # 緯度経度がKyotoCity_Stations_Info.jsonに存在しない場合
+                new_station = {
+                    "Station_Code": None, # 適切な駅コードを割り当てる
+                    "Station_Name": station_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "lines": [line_name]
+                }
+                station_dict_ls.append(new_station)
+                station_info_by_lat_long[key] = new_station
+    # 辞書データをJSONファイルとして保存    
+    for station in station_dict_ls:
+        if "lines" not in station:
+            station["lines"] = []
+    with open(Station_JSON_save_path, 'w', encoding='utf-8') as file:
+        json.dump(station_dict_ls, file, ensure_ascii=False, indent=4)
 
 # =====================================================================================================================
-#るるぶAPIから取り出された観光地データから交通情報をNLUする
+#るるぶAPIから取り出された観光地データから交通情報をNLUする（※処理時間多）
 # =====================================================================================================================
 RURUBU_TraficInfo_save_path = os.path.join(output_data_path, 'RURUBU_KyotoCity_TraficInfo.json')
 
@@ -114,40 +193,3 @@ else:
 
     print("RURUBUAPIの交通情報を構造化したデータがRURUBU_KyotoCity_TraficInfo.jsonファイルに保存されました。")
 
-# =====================================================================================================================
-#京都市内の駅を取り出して，緯度経度を計算，データを保存する
-# =====================================================================================================================
-Geocode_save_path = os.path.join(output_data_path, 'KyotoCity_Stations_geocode.json')
-
-if os.path.exists(Geocode_save_path):
-    print("GoogleAPIから取得した駅Geocodeファイルがすでに存在します。スキップします。")
-else:
-    gmaps = googlemaps.Client(key=GOOGLE_API_KEY)
-    # 駅名のファイルを開く
-    with open('Stations_KyotoCity.txt', 'r', encoding='utf-8') as file:
-        station_names = file.readlines()
-
-    # 結果を保存するための辞書
-    result = {}
-
-    for idx, station_name in tqdm(enumerate(station_names),total=len(station_names)):
-        query = station_name.strip() + ", Kyoto, Japan"
-
-        # Geocoding APIを呼び出し
-        geocode_result = gmaps.geocode(query)
-        # 緯度と経度を取得
-        lat = geocode_result[0]['geometry']['location']['lat']
-        lng = geocode_result[0]['geometry']['location']['lng']
-
-        # 結果を辞書に保存
-        result[idx] = {
-            'station_name': station_name,
-            'latitude': lat,
-            'longitude': lng
-        }
-
-    # JSONファイルに保存
-    with open(Geocode_save_path, 'w', encoding='utf-8') as file:
-        json.dump(result, file, ensure_ascii=False, indent=4)
-
-    print("緯度と経度が stations_geocode.json ファイルに保存されました。")

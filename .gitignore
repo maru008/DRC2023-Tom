@@ -7,7 +7,7 @@ redis_data/
 redis_insight_db/
 #APIなどから取れるデータ
 CityGraph_app/data/output_data/RURUBU_results_KyotoCity.json
-CityGraph_app/data/output_data/KyotoCity_Stations_geocode.json
+CityGraph_app/data/output_data/KyotoCity_Stations_Info.json
 CityGraph_app/data/output_data/RURUBU_KyotoCity_TraficInfo.json
 
 #以降pythonデフォルト==============================
