@@ -11,9 +11,10 @@ in DRC2023, Team Tom
 python -m venv .venv #.venvにすることでgitにコミットされない
 ```
 
-仮想環境に入る
+仮想環境に入ってライブラリをインストール
 ```
 source .venv/bin/activate
+pip install -r Dialog_app/requirements.txt
 ```
 対話プログラム（start_dialog.sh）は以降この環境で実行．
 ---

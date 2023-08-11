@@ -1,7 +1,10 @@
 # 個人的なファイル
 config.ini
 MongoDB/
-RURUBU_app/data/RURUBU_results_KyotoCity.json
+CityGraph_app/data/output_data/RURUBU_results_KyotoCity.json
+CityGraph_app/data/output_data/stations_geocode.json
+
+
 
 #以降pythonデフォルト==============================
 # Byte-compiled / optimized / DLL files
