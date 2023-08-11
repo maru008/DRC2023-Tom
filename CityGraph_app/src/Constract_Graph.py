@@ -6,6 +6,7 @@ import redis
 from redisgraph import Graph, Node, Edge
 from geopy.distance import geodesic
 import json
+import re
 
 input_data_root_path = "../data/"
 # =====================================================================================================================
@@ -36,8 +37,7 @@ graph = Graph(graph_name, redis_con)
 nodes_ref = {}
 for station_i in tqdm(KyotoCity_Stations_Info,desc="Input Station node to Redis"):
     add_properties={
-        'StationCode': station_i["Station_Name"],
-        'StationName': station_i["Station_Name"], 
+        'Name': station_i["Station_Name"], 
         'Latitude': station_i["latitude"],
         'Longitude': station_i["longitude"],
         'Trainline': station_i["lines"]
@@ -49,10 +49,11 @@ for station_i in tqdm(KyotoCity_Stations_Info,desc="Input Station node to Redis"
 sight_nodes_ref = {}
 # ノード（観光地）を追加
 for spot_i in tqdm(RURUBU_SightSpot_data,desc="input SightseeingSpot node to Redis"):
+
     #ここに追加すべきノードのプロパティを入れる(現状はIDと観光地名だけ)
     add_properties={
-        "name":spot_i["Title"],'SightID':spot_i["SightID"],
-        'latitude': spot_i["LatitudeW10"], 'longitude': spot_i["LongitudeW10"]
+        "Name":spot_i["Title"],'SightID':spot_i["SightID"],
+        'Latitude': float(spot_i["LatitudeW10"]), 'Longitude': float(spot_i["LongitudeW10"])
     }
     sight_node = Node(label="SightseeingSpot",properties=add_properties)
     graph.add_node(sight_node)
@@ -60,7 +61,7 @@ for spot_i in tqdm(RURUBU_SightSpot_data,desc="input SightseeingSpot node to Red
 
 #-----------------------------------------------------------------------------------
 # エッジ（駅間の接続）を追加
-for line, station_list in train_lines.items():
+for line, station_list in tqdm(train_lines.items(),total=len(train_lines.items())):
     for i in range(len(station_list) - 1):
         station1_name = station_list[i]
         station2_name = station_list[i + 1]
@@ -89,6 +90,7 @@ for spot_i in tqdm(RURUBU_SightSpot_data,desc="input SightseeingSpot-station edg
     nearest_station = spot_i['Station']["Name"]
     if not nearest_station.endswith("駅"):
         nearest_station += "駅"
+    nearest_station = re.sub(r'\(.*?\)', '', nearest_station)
     sight_node = sight_nodes_ref[spot_i["SightID"]]
     # 対応する駅ノードを取得
     station_node = nodes_ref.get(nearest_station, None)
@@ -97,7 +99,7 @@ for spot_i in tqdm(RURUBU_SightSpot_data,desc="input SightseeingSpot-station edg
         properties = {'type': 'NEAREST'}  # 必要に応じてプロパティを追加
         edge = Edge(sight_node, 'NEAR', station_node, properties=properties)
         graph.add_edge(edge)
-        
+        # print(station_node.properties['Name'],sight_node.properties['Name'])
         edge_reverse = Edge(station_node, 'NEAR', sight_node, properties=properties)
         graph.add_edge(edge_reverse)
 graph.commit()
