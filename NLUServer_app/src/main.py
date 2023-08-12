@@ -1,7 +1,7 @@
 import os
 import json
 
-from utils.receive_data import Server
+from utils.TCP_Server_data import Server
 from utils.config_reader import read_config
 from utils.mongodb_tool import MongoDB
 
@@ -22,7 +22,7 @@ with open(prompt_path, 'r', encoding='utf-8') as f:
 
 input_text_ls = []
 while True:
-    received_data = server.accept_connections()
+    received_data, connection = server.accept_connections()
     if received_data is not None:
         # ここで受け取ったデータを使用できます
         received_data_ls = eval(received_data)
@@ -33,12 +33,15 @@ while True:
         if received_text == "終了":
             mongo_db.close_connection()
             input_text_ls = []
+            connection.close()
         else:
             res = text_nlu.NLU_GPT4(received_text,prompt_text,input_text_ls)
             input_text_ls.append({"role": "user", "content":received_text})
             print(res, flush=True)
             try:
                 mongo_db.update_document(str(ID), res)
+                connection.sendall(str(res).encode('utf-8'))
             except json.JSONDecodeError as e:  # JSONデコードエラーをキャッチ
                 print("エラー: JSONデコードに失敗しました。", str(e), flush=True)
-        
+                connection.sendall(str(e).encode('utf-8'))
+            connection.close()

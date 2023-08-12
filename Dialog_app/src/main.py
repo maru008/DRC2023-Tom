@@ -2,7 +2,7 @@
 import os
 import sys
 from datetime import datetime
-
+import json
 
 from utils.config_reader import read_config
 from utils.general_tool import SectionPrint
@@ -71,21 +71,26 @@ speech_gen.speech_generate("旅行代理店ロボットです．なんでも聞�
 user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
 
 while True:
-    # print(f"{dilognum}:音声認識開始")
+    # 発話認識
     user_input_text = voice_recog.recognize()
     print(user_input_text)
     user_input_log.append({"role": "user", "content":user_input_text})
-    socket_conn.send_data(str([unique_id,user_input_text]))
+    
     if user_input_text in ["終了","quit",":q"]:
         break
+    LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
+    
+    #NLUサーバに文字列を送り，JSONを受け入れる
+    response_data = socket_conn.send_data(str([unique_id,user_input_text]))
+    response_data = json.loads(response_data)
     
     #バックエンドサーバにIDと文字列を送る
     mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
 
-    LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
+    
     user_input_log.append({"role": "assistant", "content":LLMresponse_text})
     
-    
+    #発話指示
     speech_gen.speech_generate(LLMresponse_text)
     
     mongodb.add_to_array(unique_id, 'robot_output_text', LLMresponse_text)

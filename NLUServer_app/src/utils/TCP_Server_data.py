@@ -21,9 +21,9 @@ class Server:
             print(f'Connected by {addr[0]}:{addr[1]}')
             data = self.receive_data(conn)  # データを受け取る
             if data:
-                conn.close()  # 接続を閉じる
+                # conn.close()  # 接続を閉じる
                 print(f"Connection from {addr[0]}:{addr[1]} closed.")
-                return data
+                return data,conn
 
     def receive_data(self, conn):
         data = conn.recv(1024)
