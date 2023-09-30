@@ -13,7 +13,7 @@ class Server:
         self.server.bind((self.host, self.port))
         self.server.listen()
         print(f"Server started on {self.host}:{self.port}. Waiting for connections...")
-
+    
     def accept_connections(self):
         while True:
             print("="*100)

@@ -69,6 +69,7 @@ with open(Dialog_prompt_path, 'r', encoding='utf-8') as f:
 #===================================================================================================
 speech_gen.speech_generate("旅行代理店ロボットです．なんでも聞いてください．")
 user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
+recive_data_num = 0
 
 while True:
     # 発話認識
@@ -82,8 +83,11 @@ while True:
     
     #NLUサーバに文字列を送り，JSONを受け入れる
     response_data = socket_conn.send_data(str([unique_id,user_input_text]))
-    response_data = json.loads(response_data)
-    
+    try:
+        response_data = json.loads(response_data)
+        recive_data_num += len(response_data.keys())
+    except:
+        pass
     #バックエンドサーバにIDと文字列を送る
     mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
 
@@ -94,7 +98,10 @@ while True:
     speech_gen.speech_generate(LLMresponse_text)
     
     mongodb.add_to_array(unique_id, 'robot_output_text', LLMresponse_text)
+    if recive_data_num > 10:
+        break
     
+speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものが，そしてあなたがどんな人かわかりました！それではプランを作成します．少しお待ちください．")
 
 SectionPrint("対話ログ出力")
 # # 会話の終了後、作成されたMongoDBのデータを出力
