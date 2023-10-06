@@ -10,8 +10,8 @@ from utils.TCPserver import SocketConnection
 
 from ServerModules.speech_generation import SpeechGeneration
 from ServerModules.voice_recognition import VoiceRecognition
-# from ServerModules.expression_generation import ExpressionGeneration
-# from ServerModules.motion_generation import MotionGeneration
+from ServerModules.face_expression_generation import ExpressionGeneration
+from ServerModules.motion_generation import MotionGeneration
 
 from DialogModules.NLGModule import NLG 
 
@@ -46,8 +46,8 @@ unique_id = mongodb.get_unique_collection_name() #コレクション名の取得
 #===================================================================================================
 speech_gen = SpeechGeneration(DIALOG_MODE,IP,config.get("Server_Info","SpeechGenerator_port"))
 voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"))
-# expression_gen = ExpressionGeneration(DIALOG_MODE,IP,)
-# motion_gen = MotionGeneration(DIALOG_MODE,IP,)
+face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
+motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++

@@ -38,6 +38,7 @@ class SpeechGeneration:
                         received_data = json.loads(message.strip())
                         if "result" in received_data:
                             if received_data["result"] == "success-end":
+                                print(f"robot:{text}")
                                 print("SpeechGeneration: End speaking successfully.")
                                 return
                             elif received_data["result"] == "failed":
