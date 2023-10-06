@@ -66,3 +66,31 @@ class MotionGeneration(Base):
     def control_at_random(self):
         motion_name = random.choice(self.preset_motions)
         return {"controlled_motion": self.play_motion(motion_name)}
+    
+    def move_max_right(self):
+    # 目, 頭, 体を右方向に向けるためのパラメータ
+        motion_parameter = {
+            "EyeController": {
+                "targetPoint": {
+                    "x": 2.0,  # x軸方向に2.0m右に
+                    "y": 1.2,  # y軸方向は変更なし
+                    "z": 1.5   # z軸方向は変更なし
+                }
+            },
+            "HeadController": {
+                "targetPoint": {
+                    "x": 2.0,
+                    "y": 1.2,
+                    "z": 1.5
+                }
+            },
+            "BodyController": {
+                "targetPoint": {
+                    "x": 2.0,
+                    "y": 1.2,
+                    "z": 1.5
+                }
+            }
+        }
+        print("move_max_right")
+        return {"controlled_motion": self.set_by_parameter(motion_parameter)}
