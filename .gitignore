@@ -9,6 +9,11 @@ redis_insight_db/
 CityGraph_app/data/output_data/RURUBU_results_KyotoCity.json
 CityGraph_app/data/output_data/KyotoCity_Stations_Info.json
 CityGraph_app/data/output_data/RURUBU_KyotoCity_TraficInfo.json
+CityGraph_app/data/output_data/value_count.csv
+CityGraph_app/data/output_data/value_count_GenreInfo.csv
+CityGraph_app/data/output_data/value_count_SightOptionList.csv
+CityGraph_app/data/preparation_data/RURUBU_GenreInfo.json
+CityGraph_app/data/output_data/NLU_Label_data.json
 
 
 #以降pythonデフォルト==============================
