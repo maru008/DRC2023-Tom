@@ -32,172 +32,39 @@ else:
 
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
 
+motion_list = [
+    "greeting_deep_head",
+    "greeting_deep_neck",
+    "greeting_deep_spine",
+    "greeting_head",
+    "greeting_light_head",
+    "greeting_light_neck",
+    "greeting_light_spine",
+    "greeting_neck",
+    "greeting_spine",
+    "head_roll_roll",
+    "leftshoulder_stretch",
+    "nod",
+    "nod_deep_head",
+    "nod_slight",
+    "nono",
+    "rightshoulder_stretch",
+    "shoulder_stretch",
+    "greeting_deep_eye",
+    "greeting_eye",
+    "nod_deep_eye",
+    "greeting",
+    "greeting_deep",
+    "greeting_light",
+    "nod_deep",
+]
 
-print("深く頭を下げる挨拶の動作")
-print(1)
-motion_gen.play_motion("greeting_deep_head")
-time.sleep(4)
-print("============")
-
-# 首を深く下げる挨拶の動作
-print("首を深く下げる挨拶の動作")
-print(1)
-motion_gen.play_motion("greeting_deep_neck")
-time.sleep(4)
-print("============")
-
-# 背骨を深く曲げる挨拶の動作
-print("背骨を深く曲げる挨拶の動作")
-print(1)
-motion_gen.play_motion("greeting_deep_spine")
-time.sleep(4)
-print("============")
-
-# 頭を軽く下げる挨拶の動作
-print("頭を軽く下げる挨拶の動作")
-print(1)
-motion_gen.play_motion("greeting_head")
-time.sleep(4)
-print("============")
-
-# 軽く頭を下げる挨拶の動作
-print("軽く頭を下げる挨拶の動作")
-print(1)
-motion_gen.play_motion("greeting_light_head")
-time.sleep(4)
-print("============")
-
-# 軽く首を下げる挨拶の動作
-print("軽く首を下げる挨拶の動作")
-print(1)
-motion_gen.play_motion("greeting_light_neck")
-time.sleep(4)
-print("============")
-
-# 背骨を軽く曲げる挨拶の動作
-print("背骨を軽く曲げる挨拶の動作")
-print(1)
-motion_gen.play_motion("greeting_light_spine")
-time.sleep(4)
-print("============")
-
-# 首を下げる挨拶の動作
-print("首を下げる挨拶の動作")
-print(1)
-motion_gen.play_motion("greeting_neck")
-time.sleep(4)
-print("============")
-
-# 背骨を曲げる挨拶の動作
-print("背骨を曲げる挨拶の動作")
-print(1)
-motion_gen.play_motion("greeting_spine")
-time.sleep(4)
-print("============")
-
-# 頭を左右にロールする動作
-print("頭を左右にロールする動作")
-print(1)
-motion_gen.play_motion("head_roll_roll")
-time.sleep(4)
-print("============")
-
-# 左の肩を伸ばす動作
-print("左の肩を伸ばす動作")
-print(1)
-motion_gen.play_motion("leftshoulder_stretch")
-time.sleep(4)
-print("============")
-
-# うなずく動作
-print("うなずく動作")
-print(1)
-motion_gen.play_motion("nod")
-time.sleep(4)
-print("============")
-
-# 頭を深くうなずく動作
-print("頭を深くうなずく動作")
-print(1)
-motion_gen.play_motion("nod_deep_head")
-time.sleep(4)
-print("============")
-
-# 軽くうなずく動作
-print("軽くうなずく動作")
-print(1)
-motion_gen.play_motion("nod_slight")
-time.sleep(4)
-print("============")
-
-# 頭を左右に振る「いいえ」の動作
-print("頭を左右に振る「いいえ」の動作")
-print(1)
-motion_gen.play_motion("nono")
-time.sleep(4)
-print("============")
-
-# 右の肩を伸ばす動作
-print("右の肩を伸ばす動作")
-print(1)
-motion_gen.play_motion("rightshoulder_stretch")
-time.sleep(4)
-print("============")
-
-# 両方の肩を伸ばす動作
-print("両方の肩を伸ばす動作")
-print(1)
-motion_gen.play_motion("shoulder_stretch")
-time.sleep(4)
-print("============")
-
-# 目を大きく開けて深く挨拶する動作
-print("目を大きく開けて深く挨拶する動作")
-print(1)
-motion_gen.play_motion("greeting_deep_eye")
-time.sleep(4)
-print("============")
-
-# 目を開けて挨拶する動作
-print("目を開けて挨拶する動作")
-print(1)
-motion_gen.play_motion("greeting_eye")
-time.sleep(4)
-print("============")
-
-# 目を大きく開けて深くうなずく動作
-print("目を大きく開けて深くうなずく動作")
-print(1)
-motion_gen.play_motion("nod_deep_eye")
-time.sleep(4)
-print("============")
-
-# 一般的な挨拶の動作
-print("一般的な挨拶の動作")
-print(1)
-motion_gen.play_motion("greeting")
-time.sleep(4)
-print("============")
-
-# 深く挨拶する動作
-print("深く挨拶する動作")
-print(1)
-motion_gen.play_motion("greeting_deep")
-time.sleep(4)
-print("============")
-
-# 軽く挨拶する動作
-print("軽く挨拶する動作")
-print(1)
-motion_gen.play_motion("greeting_light")
-time.sleep(4)
-print("============")
-
-# 深くうなずく動作
-print("深くうなずく動作")
-print(1)
-motion_gen.play_motion("nod_deep")
-time.sleep(4)
-print("============")
+print("====================================")
+for motion_id in motion_list:
+    print(f"motionID : {motion_id}")
+    time.sleep(1)
+    motion_gen.play_motion(motion_id)
+    time.sleep(4)
+    print("====================================")
 
 motion_gen.play_motion("InitialPosition")
