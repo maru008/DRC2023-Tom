@@ -1,5 +1,6 @@
 # mongo_tools.py
 import uuid
+from datetime import datetime
 from pymongo import MongoClient
 from tabulate import tabulate
 import pandas as pd
@@ -57,13 +58,10 @@ class MongoDB:
         Returns:
         str: 生成された一意のコレクション名。
         """
-        while True:
-            unique_id = str(uuid.uuid4())
-            if unique_id not in self.db.list_collection_names():
-                self.collection = self.db[unique_id]
-                user_id = str(uuid.uuid4())
-                self.collection.insert_one({'user_id': user_id})
-                return unique_id
+        unique_name = datetime.now().strftime('%Y%m%d%H%M%S')
+        if unique_name not in self.db.list_collection_names():
+            self.collection = self.db[unique_name]
+            return unique_name
     
     def print_collection(self, collection_name):
         collection = self.db[collection_name]
@@ -101,3 +99,12 @@ class MongoDB:
         else:
             print("No data found in the database.")
 
+def check_db_exists(db_name):
+        # MongoDBに接続
+    client = MongoClient('mongodb://localhost:27017/')
+        
+    # 現在のデータベース一覧を取得
+    db_list = client.list_database_names()
+    
+    # 指定したデータベース名が一覧に存在するか確認
+    return db_name in db_list

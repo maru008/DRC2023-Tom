@@ -35,11 +35,12 @@ class VoiceRecognition:
                     if result["user_utterance"] != "" and result["confidence"] >= confidence_threshold:
                         break
             self.sock.close()
-
-            return result["user_utterance"]
+            User_res_text = result["user_utterance"]
+            print("User: ",User_res_text)
+            return User_res_text
 
         elif self.DIALOG_MODE == "console_dialog":
-            usr_input_text = str(input("user:"))
+            usr_input_text = str(input("User: "))
             return usr_input_text
     
     def _send_command(self, command):

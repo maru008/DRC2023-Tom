@@ -14,6 +14,7 @@ class SpeechGeneration:
         self.sock.send(command_ln.encode('utf-8'))
 
     def speech_generate(self, text):
+        print("System: ",text)
         if self.DIALOG_MODE == "robot_dialog":
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
@@ -50,4 +51,4 @@ class SpeechGeneration:
             finally:
                 self.sock.close()
         elif self.DIALOG_MODE == "console_dialog":
-            print(f"robot: {text}")
+            pass
