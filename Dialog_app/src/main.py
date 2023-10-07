@@ -67,19 +67,28 @@ with open(Dialog_prompt_path, 'r', encoding='utf-8') as f:
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 対話開始 +++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
+motion_gen.play_motion("greeting_deep")
 speech_gen.speech_generate("旅行代理店ロボットです．なんでも聞いてください．")
 user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
 recive_data_num = 0
 
 while True:
     # 発話認識
+    motion_gen.play_motion("nod_slight")
     user_input_text = voice_recog.recognize()
-    print(user_input_text)
+    print("User: ",user_input_text)
+    motion_gen.play_motion("nod_slight")
+    
     user_input_log.append({"role": "user", "content":user_input_text})
     
     if user_input_text in ["終了","quit",":q"]:
         break
+    
     LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
+    
+    #発話指示
+    speech_gen.speech_generate(LLMresponse_text)
+    print("System: ",LLMresponse_text)
     
     #NLUサーバに文字列を送り，JSONを受け入れる
     response_data = socket_conn.send_data(str([unique_id,user_input_text]))
@@ -93,9 +102,6 @@ while True:
 
     
     user_input_log.append({"role": "assistant", "content":LLMresponse_text})
-    
-    #発話指示
-    speech_gen.speech_generate(LLMresponse_text)
     
     mongodb.add_to_array(unique_id, 'robot_output_text', LLMresponse_text)
     if recive_data_num > 10:

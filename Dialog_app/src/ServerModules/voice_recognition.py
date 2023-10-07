@@ -23,7 +23,7 @@ class VoiceRecognition:
                         time.sleep(0.1)
                         continue
                     result = self.received_stack.pop(0)
-                    print(result)
+                    # print(result)
                     if result["type"] == "silent" or (result["type"] == "final" and result["user_utterance"] == "" and result["confidence"] < confidence_threshold):
                         self.received_stack.clear()
                         break
