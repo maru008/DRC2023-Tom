@@ -4,7 +4,7 @@ from .base import Base
 
 class ExpressionGeneration(Base):
     def __init__(self, DIALOG_MODE, ip, port):
-        super().__init__(ip, int(port))
+        super().__init__(DIALOG_MODE,ip, int(port))
         
         self.DIALOG_MODE = DIALOG_MODE
         

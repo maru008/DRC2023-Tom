@@ -1,11 +1,14 @@
 import socket
 
 class Base:
-    def __init__(self, ip, port):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print("{}:: Connecting to Server...".format(self.__class__.__name__))
-        self.sock.connect((ip, port))
-        print("{}:: Connected successfully.".format(self.__class__.__name__))
+    def __init__(self, DIALOG_MODE, ip, port):
+        if DIALOG_MODE == "console_dialog":
+            pass
+        else:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print("{}:: Connecting to Server...".format(self.__class__.__name__))
+            self.sock.connect((ip, port))
+            print("{}:: Connected successfully.".format(self.__class__.__name__))
 
     def _setblocking(self, flag=True):
         self.sock.setblocking(flag)

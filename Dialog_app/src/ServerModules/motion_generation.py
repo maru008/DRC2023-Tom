@@ -6,7 +6,7 @@ from .base import Base
 
 class MotionGeneration(Base):
     def __init__(self, DIALOG_MODE, ip, port):
-        super().__init__(ip, int(port))
+        super().__init__(DIALOG_MODE, ip, int(port))
         self.DIALOG_MODE = DIALOG_MODE
         self.ip = ip
         self.preset_motions = ["right_hand_safety", "left_hand_safety", "righthandonknee", "lefthandonknee"]
