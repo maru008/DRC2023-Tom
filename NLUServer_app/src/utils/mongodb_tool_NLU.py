@@ -34,28 +34,28 @@ class MongoDB:
             if json_data[key] and isinstance(json_data[key], list):
                 # 既存のデータが空の場合
                 if not existing_data.get(key):
-                    print(f"[DEBUG] Key '{key}' not found in existing data. Creating new key.")
+                    # print(f"[DEBUG] Key '{key}' not found in existing data. Creating new key.")
                     existing_data[key] = json_data[key]
                 # 既存のデータが空でない場合、かつ新しいデータが既存のリストに存在しない場合
                 elif json_data[key][0] not in existing_data[key]:
                     if isinstance(existing_data[key], list):
                         existing_data[key].append(json_data[key][0])
-                        print(f"[DEBUG] Adding {json_data[key][0]} to existing key {key}.")
+                        # print(f"[DEBUG] Adding {json_data[key][0]} to existing key {key}.")
                     else:
                         existing_data[key] = [existing_data[key], json_data[key][0]]
-                        print(f"[DEBUG] Converted {key} to a list and added {json_data[key][0]}.")
+                        # print(f"[DEBUG] Converted {key} to a list and added {json_data[key][0]}.")
 
         # データを更新
         result = collection.update_one({}, {'$set': existing_data})
 
-        if result.modified_count > 0:
-            print("[DEBUG] Successfully updated the document.")
-        else:
-            print("[DEBUG] Document was not modified.")
+        # if result.modified_count > 0:
+        #     print("[DEBUG] Successfully updated the document.")
+        # else:
+        #     print("[DEBUG] Document was not modified.")
 
         # デバッグのため、更新後のデータを表示
         data_after_update = collection.find_one()
-        print("[DEBUG] Data after update:", data_after_update)
+        # print("[DEBUG] Data after update:", data_after_update)
 
         
         

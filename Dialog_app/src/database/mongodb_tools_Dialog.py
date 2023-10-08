@@ -87,6 +87,24 @@ class MongoDB:
         # データを更新
         collection.update_one({}, {'$set': existing_data})
     
+    def fetch_data_by_id(self, collection_name):
+        """
+        指定したコレクション名に基づいてデータを取得します。
+        
+        Args:
+        collection_name (str): データを取得するコレクションの名前
+        
+        Returns:
+        dict: コレクションから取得したデータ
+        """
+        collection = self.db[collection_name]
+        data = collection.find_one()  # コレクションの最初のドキュメントを取得
+        if data:
+            del data['_id']
+            del data['User_text']
+            del data['System_text']
+        return data
+    
     def print_collection_data(self, collection_name):
         collection = self.db[collection_name]
 
@@ -118,3 +136,56 @@ def check_db_exists(db_name):
     db_list = client.list_database_names()
     # 指定したデータベース名が一覧に存在するか確認
     return db_name in db_list
+
+
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ 観光地DB関連メソッド ++++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
+class SightseeingDBHandler:
+    def __init__(self,db_name):
+        self.client = MongoClient('mongodb://localhost:27017/')
+        self.db = self.client[db_name]
+
+    def build_query(self,criteria):
+        query = {}
+        
+        # LGenreに関するクエリの追加
+        if "LGenre" in criteria and criteria["LGenre"]:
+            query["GenreList.LGenre.Name"] = {"$in": criteria["LGenre"]}
+            
+        # MGenreに関するクエリの追加
+        if "MGenre" in criteria and criteria["MGenre"]:
+            query["GenreList.MGenre.Name"] = {"$in": criteria["MGenre"]}
+            
+        # Genreに関するクエリの追加
+        if "Genre" in criteria and criteria["Genre"]:
+            query["GenreList.Genre.Name"] = {"$in": criteria["Genre"]}
+            
+        # SightOptionに関するクエリの追加
+        if "SightOption" in criteria and criteria["SightOption"]:
+            query["SightOptionList.SightOptionName"] = {"$in": criteria["SightOption"]}
+        
+        # if "Time" in criteria and criteria["Time"]:
+        #     query["Time"] = {"$in": criteria["Time"]}
+            
+        # if "Traffic" in criteria and criteria["Traffic"]:
+        #     query["$or"] = [
+        #         {"Traffic1": {"$in": criteria["Traffic"]}},
+        #         {"Traffic2": {"$in": criteria["Traffic"]}}
+        #     ]
+        return query
+    
+    def fetch_sight_ids_titles(self,criteria):
+        # MongoDBサーバへの接続設定
+        collection = self.db['sightseeing_spots']
+        
+        # クエリの生成
+        query = self.build_query(criteria)
+        
+        # クエリの実行
+        results = collection.find(query, {"SightID": 1, "_id": 0})
+        
+        # SightIDのリストの作成
+        sight_ids = [result['SightID'] for result in results]
+        
+        return sight_ids

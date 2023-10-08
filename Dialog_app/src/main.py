@@ -3,6 +3,7 @@ import os
 import sys
 from datetime import datetime
 import json
+import threading
 
 from utils.config_reader import read_config
 from utils.general_tool import SectionPrint
@@ -16,7 +17,7 @@ from ServerModules.motion_generation import MotionGeneration
 from DialogModules.NLGModule import NLG 
 
 
-from database.mongodb_tools_Dialog import MongoDB,check_db_exists
+from database.mongodb_tools_Dialog import MongoDB,check_db_exists,SightseeingDBHandler
 
 USE_GPT_API = True
 
@@ -34,15 +35,12 @@ else:
     sys.exit('正しく入力してください')
     
 #　システムチェックでAPIを使わないのためのコマンド
-if DIALOG_MODE == "console_dialog":
-    console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
-    if console_input == "n":
-        USE_GPT_API = False
-        
-
+console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
+if console_input == "n":
+    USE_GPT_API = False
 
 #===================================================================================================
-# +++++++++++++++++++++++++++++++ データベース準備 +++++++++++++++++++++++++++++++++++++++++++++++
+# +++++++++++++++++++++++++++++++ データベース準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 
 print("Connecting to Database...")
@@ -53,9 +51,9 @@ Dialog_mongodb.insert_initial_data(unique_id) #初期データの追加
 #観光地MongoDBの用意
 if check_db_exists("Sightseeing_Spot_DB") == False:
     sys.exit("観光地データベースを用意してください")
-
+Sightseeing_mongodb = SightseeingDBHandler("Sightseeing_Spot_DB")
 #===================================================================================================
-# +++++++++++++++++++++++++++++++ ロボットサーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++
+# +++++++++++++++++++++++++++++++ ロボットサーバ準備 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 speech_gen = SpeechGeneration(DIALOG_MODE,IP,config.get("Server_Info","SpeechGenerator_port"))
 voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"))
@@ -63,12 +61,12 @@ face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotEx
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
 
 #===================================================================================================
-# +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++
+# +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 socket_conn = SocketConnection('localhost', 12345) 
 
 #===================================================================================================
-# +++++++++++++++++++++++++++++++ フロントLLM準備 +++++++++++++++++++++++++++++++++++++++++++++++
+# +++++++++++++++++++++++++++++++ フロントLLM準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 print("Preparing Front LLM...")
 RobotNLG = NLG(config)
@@ -77,6 +75,14 @@ Dialog_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/Dialog_staff
 with open(Dialog_prompt_path, 'r', encoding='utf-8') as f:
     # ファイルの内容を読み込む
     ChatGPT_prompt_text = f.read()
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ 非同期処理用 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
+def async_speech_generate(text):
+    speech_gen.speech_generate(text)
+    
+def async_send_data(data):
+    socket_conn.send_data(data)
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 対話開始 +++++++++++++++++++++++++++++++++++++++++++++++
@@ -106,24 +112,37 @@ while True:
         response_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
     else:
         response_text = user_input_text+"ってなんですか？"
+        
+    #===================================================================================================
+    # 非同期処理開始
+    speech_thread = threading.Thread(target=async_speech_generate, args=(response_text,))#発話指示
+    send_data_thread = threading.Thread(target=async_send_data, args=(str([unique_id, user_input_text]),))#NLUサーバに文字列を送る（DBへの追加は向こう側）
     
-    #発話指示
-    speech_gen.speech_generate(response_text)
+    speech_thread.start()
+    send_data_thread.start()
     
-    #NLUサーバに文字列を送る（DBへの追加は向こう側）
-    if USE_GPT_API:
-        socket_conn.send_data(str([unique_id,user_input_text]))
+    # 必要に応じて、後の処理で両方のスレッドが終了するのを待つ
+    speech_thread.join()
+    send_data_thread.join()    
     
     ## ユーザとロボットのテキスト追加
     user_input_ls.append(user_input_text)
     system_output_text.append(response_text)
-    
+    #===================================================================================================
 
     # LLM用の対話ログ追加
     user_input_log.append({"role": "assistant", "content":response_text})
     
     #観光地絞り込みを行う
+    ## 現状のJSONを獲得
+    data_as_json = Dialog_mongodb.fetch_data_by_id(unique_id)
+    print(data_as_json)
     
+    sight_ids = Sightseeing_mongodb.fetch_sight_ids_titles(data_as_json)
+    sight_nums = len(sight_ids)
+    print("ヒットした観光地の数: ",len(sight_ids))
+    if sight_nums < 20:
+        break
     
 speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものが，そしてあなたがどんな人かわかりました！それではプランを作成します．少しお待ちください．")
 
