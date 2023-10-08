@@ -84,6 +84,8 @@ def async_speech_generate(text):
 def async_send_data(data):
     socket_conn.send_data(data)
 
+
+Dialog_mongodb.print_collection_data(unique_id)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 対話開始 +++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -132,19 +134,33 @@ while True:
 
     # LLM用の対話ログ追加
     user_input_log.append({"role": "assistant", "content":response_text})
-    
+    Dialog_mongodb.print_collection_data(unique_id)
+
     #観光地絞り込みを行う
-    ## 現状のJSONを獲得
+    ## 対話DBから現状のJSONを獲得
     data_as_json = Dialog_mongodb.fetch_data_by_id(unique_id)
     print(data_as_json)
     
-    sight_ids = Sightseeing_mongodb.fetch_sight_ids_titles(data_as_json)
-    sight_nums = len(sight_ids)
-    print("ヒットした観光地の数: ",len(sight_ids))
-    if sight_nums < 20:
+    trg_Genre = "LGenre"
+    #観光地DBへ検索
+    result_data = Sightseeing_mongodb.fetch_sight_ids(data_as_json,trg_Genre)
+    
+    print("----------")
+    genre = []
+    for genre_value, ids in result_data.items():
+        print(f"{trg_Genre}: {genre_value}")
+        print("ヒットした観光地の数: ", len(ids))
+        genre.append(genre_value)
+        print("----------")
+    total_genre = len(set((genre_value)))
+    print(total_genre)
+    if total_genre > 2:
         break
     
-speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものが，そしてあなたがどんな人かわかりました！それではプランを作成します．少しお待ちください．")
+
+        
+        
+speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものか，そしてあなたがどんな人かわかりました！それではプランを作成します．少しお待ちください．")
 
 
 ##  対話ログを追加
@@ -154,6 +170,7 @@ user_text_json = {
 system_text_json = {
     "System_text":system_output_text
 }
+
 Dialog_mongodb.update_data(unique_id,user_text_json)
 Dialog_mongodb.update_data(unique_id,system_text_json)
 

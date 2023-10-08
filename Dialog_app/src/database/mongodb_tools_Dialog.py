@@ -76,13 +76,25 @@ class MongoDB:
         # 新しいJSONデータを既存のデータと結合
         for key in json_data:
             # もし新しいデータが空でないなら、それを追加
-            if json_data[key][0]:
-                # 既存のデータが空でない場合、かつ新しいデータが既存のリストに存在しない場合
-                if existing_data[key] and json_data[key][0] not in existing_data[key]:  
-                    existing_data[key].append(json_data[key][0])
+            if json_data[key] and isinstance(json_data[key], list) and json_data[key][0]:
+                new_value = json_data[key][0].strip()  # 前後の空白を取り除く
+                if not new_value:  # 新しいデータが空白の場合、スキップ
+                    continue
+
                 # 既存のデータが空の場合
-                elif not existing_data[key]:
-                    existing_data[key] = json_data[key]
+                if not existing_data.get(key):
+                    existing_data[key] = [new_value]  # リストとして新しいデータをセット
+                # 既存のデータが空でない場合、かつ新しいデータが既存のリストに存在しない場合
+                elif new_value not in existing_data[key]:
+                    if isinstance(existing_data[key], list):
+                        existing_data[key].append(new_value)
+                    else:
+                        existing_data[key] = [existing_data[key], new_value]
+
+        # ここで、空白のリスト [''] を削除する
+        for key, value in existing_data.items():
+            if value == ['']:
+                del existing_data[key]
 
         # データを更新
         collection.update_one({}, {'$set': existing_data})
@@ -146,22 +158,21 @@ class SightseeingDBHandler:
         self.client = MongoClient('mongodb://localhost:27017/')
         self.db = self.client[db_name]
 
-    def build_query(self,criteria):
+    def build_query(self, base_criteria, genre_value, genre_type="LGenre"):
+        criteria = base_criteria.copy()
+        criteria[genre_type] = [genre_value]
+    
         query = {}
-        
-        # LGenreに関するクエリの追加
+    
         if "LGenre" in criteria and criteria["LGenre"]:
             query["GenreList.LGenre.Name"] = {"$in": criteria["LGenre"]}
             
-        # MGenreに関するクエリの追加
         if "MGenre" in criteria and criteria["MGenre"]:
             query["GenreList.MGenre.Name"] = {"$in": criteria["MGenre"]}
             
-        # Genreに関するクエリの追加
         if "Genre" in criteria and criteria["Genre"]:
             query["GenreList.Genre.Name"] = {"$in": criteria["Genre"]}
             
-        # SightOptionに関するクエリの追加
         if "SightOption" in criteria and criteria["SightOption"]:
             query["SightOptionList.SightOptionName"] = {"$in": criteria["SightOption"]}
         
@@ -175,17 +186,16 @@ class SightseeingDBHandler:
         #     ]
         return query
     
-    def fetch_sight_ids_titles(self,criteria):
-        # MongoDBサーバへの接続設定
+    def fetch_sight_ids(self, criteria, genre_type="LGenre"):
         collection = self.db['sightseeing_spots']
         
-        # クエリの生成
-        query = self.build_query(criteria)
+        sight_ids = {}
         
-        # クエリの実行
-        results = collection.find(query, {"SightID": 1, "_id": 0})
-        
-        # SightIDのリストの作成
-        sight_ids = [result['SightID'] for result in results]
-        
+        for genre_value in criteria[genre_type]:
+            if not genre_value:  # Skip empty values
+                continue
+            query = self.build_query(criteria, genre_value, genre_type)
+            distinct_sight_ids = collection.distinct("SightID", query)
+            sight_ids[genre_value] = distinct_sight_ids
+            
         return sight_ids

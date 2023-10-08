@@ -46,17 +46,7 @@ class MongoDB:
                         # print(f"[DEBUG] Converted {key} to a list and added {json_data[key][0]}.")
 
         # データを更新
-        result = collection.update_one({}, {'$set': existing_data})
-
-        # if result.modified_count > 0:
-        #     print("[DEBUG] Successfully updated the document.")
-        # else:
-        #     print("[DEBUG] Document was not modified.")
-
-        # デバッグのため、更新後のデータを表示
-        data_after_update = collection.find_one()
-        # print("[DEBUG] Data after update:", data_after_update)
-
+        collection.update_one({}, {'$set': existing_data})
         
         
     def print_collection_data(self, collection_name):
