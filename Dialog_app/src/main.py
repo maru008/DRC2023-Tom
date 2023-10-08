@@ -16,8 +16,9 @@ from ServerModules.motion_generation import MotionGeneration
 from DialogModules.NLGModule import NLG 
 
 
-from database.mongo_tools import MongoDB,check_db_exists
+from database.mongodb_tools_Dialog import MongoDB,check_db_exists
 
+USE_GPT_API = True
 
 ##引数情報を取得
 config = read_config()
@@ -32,16 +33,23 @@ elif user_input_val == "n":
 else:
     sys.exit('正しく入力してください')
     
+#　システムチェックでAPIを使わないのためのコマンド
+if DIALOG_MODE == "console_dialog":
+    console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
+    if console_input == "n":
+        USE_GPT_API = False
+        
 
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ データベース準備 +++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-print("======================")
-print("Connecting to Database")
+
+print("Connecting to Database...")
 Dialog_mongodb = MongoDB('DRC2023_Dialog_DB') #クラス呼び出し
 unique_id = Dialog_mongodb.get_unique_collection_name() #コレクション名の取得
-print("======================")
+Dialog_mongodb.insert_initial_data(unique_id) #初期データの追加
+
 #観光地MongoDBの用意
 if check_db_exists("Sightseeing_Spot_DB") == False:
     sys.exit("観光地データベースを用意してください")
@@ -62,22 +70,24 @@ socket_conn = SocketConnection('localhost', 12345)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ フロントLLM準備 +++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-print("======================")
-print("Preparing Front LLM")
+print("Preparing Front LLM...")
 RobotNLG = NLG(config)
 script_dir = os.path.dirname(os.path.realpath(__file__))
 Dialog_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/Dialog_staff.txt")
 with open(Dialog_prompt_path, 'r', encoding='utf-8') as f:
     # ファイルの内容を読み込む
     ChatGPT_prompt_text = f.read()
-print("======================")
+
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 対話開始 +++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 motion_gen.play_motion("greeting_deep")
 speech_gen.speech_generate("旅行代理店ロボットです．なんでも聞いてください．")
 user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
-recive_data_num = 0
+
+user_input_ls = []
+system_output_text = []
+
 
 while True:
     # 発話認識
@@ -88,33 +98,46 @@ while True:
     
     user_input_log.append({"role": "user", "content":user_input_text})
     
-    if user_input_text in ["終了","quit",":q"]:
+    if user_input_text in ["終了","quit","q"]:
         break
     
-    LLMresponse_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
+    # GPTを使うかどうか
+    if USE_GPT_API:
+        response_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
+    else:
+        response_text = user_input_text+"ってなんですか？"
     
     #発話指示
-    speech_gen.speech_generate(LLMresponse_text)
+    speech_gen.speech_generate(response_text)
     
-    #NLUサーバに文字列を送り，JSONを受け入れる
-    response_data = socket_conn.send_data(str([unique_id,user_input_text]))
-    try:
-        response_data = json.loads(response_data)
-        recive_data_num += len(response_data.keys())
-    except:
-        pass
-    #データベースサーバにIDと文字列を送る
-    Dialog_mongodb.add_to_array(unique_id, 'user_input_text', user_input_text)
+    #NLUサーバに文字列を送る（DBへの追加は向こう側）
+    if USE_GPT_API:
+        socket_conn.send_data(str([unique_id,user_input_text]))
+    
+    ## ユーザとロボットのテキスト追加
+    user_input_ls.append(user_input_text)
+    system_output_text.append(response_text)
+    
 
+    # LLM用の対話ログ追加
+    user_input_log.append({"role": "assistant", "content":response_text})
     
-    user_input_log.append({"role": "assistant", "content":LLMresponse_text})
+    #観光地絞り込みを行う
     
-    Dialog_mongodb.add_to_array(unique_id, 'robot_output_text', LLMresponse_text)
-    if recive_data_num > 10:
-        break
     
 speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものが，そしてあなたがどんな人かわかりました！それではプランを作成します．少しお待ちください．")
 
-SectionPrint("対話ログ出力")
+
+##  対話ログを追加
+user_text_json = {
+    "User_text":user_input_ls
+}
+system_text_json = {
+    "System_text":system_output_text
+}
+Dialog_mongodb.update_data(unique_id,user_text_json)
+Dialog_mongodb.update_data(unique_id,system_text_json)
+
+SectionPrint("NLU結果出力")
 # # 会話の終了後、作成されたMongoDBのデータを出力
-Dialog_mongodb.print_collection(str(unique_id))
+Dialog_mongodb.print_collection_data(unique_id)

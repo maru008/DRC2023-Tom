@@ -1,4 +1,4 @@
-from mongo_tools import MongoDB
+from mongodb_tools_Dialog import MongoDB
 
 trg_db_name = input("削除対象のDB: ")
 mongodb = MongoDB(trg_db_name) #クラス呼び出し

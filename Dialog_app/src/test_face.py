@@ -19,7 +19,7 @@ from ServerModules.motion_generation import MotionGeneration
 from DialogModules.NLGModule import NLG 
 
 
-from database.mongo_tools import MongoDB
+from Dialog_app.src.database.mongodb_tools_Dialog import MongoDB
 
 
 config = read_config()

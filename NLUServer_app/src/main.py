@@ -3,14 +3,16 @@ import json
 
 from utils.TCP_Server_data import Server
 from utils.config_reader import read_config
-from utils.mongodb_tool import MongoDB
+from utils.mongodb_tool_NLU import MongoDB
 
 from NLUModule.Text_NLU_module import NLU
+
 print("start NLU Server !", flush=True)
+
 server = Server()
 server.start_server()
 
-mongo_db = MongoDB('Dialog_system')
+mongo_db = MongoDB('DRC2023_Dialog_DB')
 
 conf_object = read_config()
 text_nlu = NLU(conf_object)
@@ -26,22 +28,20 @@ while True:
     if received_data is not None:
         # ここで受け取ったデータを使用できます
         received_data_ls = eval(received_data)
-        ID = received_data_ls[0]
+        unique_id = str(received_data_ls[0])
         received_text = received_data_ls[1]
-        # print("ID:",ID, flush=True)
+        print("ID:",unique_id, flush=True)
         print("recieve text:",received_text, flush=True)
         if received_text == "終了":
+            #MongoDBとの接続を解除
             mongo_db.close_connection()
             input_text_ls = []
+            #フロントとの接続を解除
             connection.close()
         else:
             res = text_nlu.NLU_GPT4(received_text,prompt_text,input_text_ls)
             input_text_ls.append({"role": "user", "content":received_text})
             print(res, flush=True)
-            try:
-                mongo_db.update_document(str(ID), res)
-                connection.sendall(str(res).encode('utf-8'))
-            except json.JSONDecodeError as e:  # JSONデコードエラーをキャッチ
-                print("エラー: JSONデコードに失敗しました。", str(e), flush=True)
-                connection.sendall(str(e).encode('utf-8'))
+            mongo_db.update_data(unique_id,json.loads(res))
+            
             connection.close()
