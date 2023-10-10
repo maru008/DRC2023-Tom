@@ -17,7 +17,8 @@ from ServerModules.motion_generation import MotionGeneration
 from DialogModules.NLGModule import NLG 
 
 
-from database.mongodb_tools_Dialog import MongoDB,check_db_exists,SightseeingDBHandler
+from database.mongodb_tools_Dialog import MongoDB,check_db_exists,SightseeingDBHandler,SightViewTCPServer
+
 
 USE_GPT_API = True
 
@@ -59,7 +60,7 @@ speech_gen = SpeechGeneration(DIALOG_MODE,IP,config.get("Server_Info","SpeechGen
 voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"))
 face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
-
+sight_view = SightViewTCPServer(IP,config.get("Server_Info","SiteViewer_port"))
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -161,6 +162,11 @@ while True:
         
         
 speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものか，そしてあなたがどんな人かわかりました！それではプランを作成します．少しお待ちください．")
+
+#画面表示するものを送る
+sightID_ls = [80026003,80026022,80025993,80025990] #これは一例
+view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
+sight_view.send_data(view_spot_json)
 
 
 ##  対話ログを追加
