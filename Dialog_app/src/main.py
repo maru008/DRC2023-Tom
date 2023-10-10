@@ -88,7 +88,7 @@ def async_send_data(data):
 
 Dialog_mongodb.print_collection_data(unique_id)
 #===================================================================================================
-# +++++++++++++++++++++++++++++++ 対話開始 +++++++++++++++++++++++++++++++++++++++++++++++
+# +++++++++++++++++++++++++++++++ 対話開始 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 motion_gen.play_motion("greeting_deep")
 speech_gen.speech_generate("旅行代理店ロボットです．なんでも聞いてください．")
@@ -147,27 +147,48 @@ while True:
     result_data = Sightseeing_mongodb.fetch_sight_ids(data_as_json,trg_Genre)
     
     print("----------")
-    genre = []
+    genre_ls = []
+    count_ls_pre_genre = []
+    trg_id_mtx = []
     for genre_value, ids in result_data.items():
         print(f"{trg_Genre}: {genre_value}")
         print("ヒットした観光地の数: ", len(ids))
-        genre.append(genre_value)
+        genre_ls.append(genre_value)
+        count_ls_pre_genre.append(len(ids))
+        trg_id_mtx.append(ids)
         print("----------")
-    total_genre = len(set((genre_value)))
-    print(total_genre)
-    if total_genre > 2:
-        break
+    print("genre_ls:",genre_ls)
+    print("count_ls_pre_genre:",count_ls_pre_genre)
+    print("trg_id_mtx:",trg_id_mtx)
     
-
-        
+    total_genre = len(set((genre_ls)))
+    print(total_genre,min(count_ls_pre_genre, default=0))
+    #　次ステップに行く際の基準式
+    if total_genre >= 2 and min(count_ls_pre_genre, default=0) >= 2:
+        break 
         
 speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものか，そしてあなたがどんな人かわかりました！それではプランを作成します．少しお待ちください．")
 
 #画面表示するものを送る
-sightID_ls = [80026003,80026022,80025993,80025990] #これは一例
+# sightID_ls = [80026003,80026022,80025993,80025990] #これは一例
+sightID_ls = [trg_id_mtx[0][0],trg_id_mtx[0][1],trg_id_mtx[1][0],trg_id_mtx[1][1]] #これも一例
 view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
 sight_view.send_data(view_spot_json)
 
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ 経路作成 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
+#ここまでで二つの観光地を決めることができたと仮定
+#以下は例
+lat1, long1 = 35.062358211, 135.736914797
+lat2, long2 = 35.060411266, 135.75270778
+
+
+
+
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ 会話終了後の処理 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
 
 ##  対話ログを追加
 user_text_json = {

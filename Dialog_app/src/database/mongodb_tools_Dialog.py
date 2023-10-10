@@ -222,7 +222,7 @@ class SightseeingDBHandler:
         for i, ID_i in enumerate(ID_ls):
             title,image_files,latitude, longitude = self.id2info_forView(ID_i)
             res_json[f"ImageURL{i+1}"] = f'https://www.j-jti.com/Storage/Image/Product/SightImage/Org/{image_files[0]}'
-            res_json[f"MapURL{i+1}"] = f'https://www.google.co.jp/maps/@{latitude},{longitude}15z'
+            res_json[f"MapURL{i+1}"] = f'https://www.google.co.jp/maps/@{latitude},{longitude},15z'
             res_json[f"Name{i+1}"] = title
         return res_json
         
@@ -237,7 +237,7 @@ class SightViewTCPServer():
         
         json_data = json.dumps(dictsite).encode('utf-8')
         sock.send(json_data)
-        print("send data")
+        print("send view data")
 
         rcv_data = sock.recv(128)            
         rcv_data = rcv_data.decode('utf-8')

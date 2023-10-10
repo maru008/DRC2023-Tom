@@ -21,21 +21,21 @@ Traffic : ['自家用車', '公共交通機関', 'タクシー', '自転車', '�
     LGenre:["食べる","見る"],
     MGenre:["社寺・教会","和食"],
     Genre:['社寺・教会','和食・日本料理'],
-    SightOption:[''],
-    Time[''],
-    DayOfTheWeek[''],
-    Traffic['']
+    SightOption:[],
+    Time[],
+    DayOfTheWeek[],
+    Traffic[]
 }
 
-もし旅行に関する話題がない場合は以下の空のJsonを出力してください．
+もし旅行に関する話題がない場合は以下の空の配列のJsonを出力してください．
 {
-    LGenre:[''],
-    MGenre:[''],
-    Genre[''],
-    SightOption[''],
-    Time[''],
-    DayOfTheWeek[''],
-    Traffic['']
+    LGenre:[],
+    MGenre:[],
+    Genre[],
+    SightOption[],
+    Time[],
+    DayOfTheWeek[],
+    Traffic[]
 }
 出力は*必ず*JSON形式のみにしてください．
 

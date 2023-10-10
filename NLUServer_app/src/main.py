@@ -12,8 +12,6 @@ print("start NLU Server !", flush=True)
 server = Server()
 server.start_server()
 
-mongo_db = MongoDB('DRC2023_Dialog_DB')
-
 conf_object = read_config()
 text_nlu = NLU(conf_object)
 
@@ -22,10 +20,11 @@ prompt_path = os.path.join(script_dir,"NLUModule/Prompts/GPT4_NLU.txt")
 with open(prompt_path, 'r', encoding='utf-8') as f:
     prompt_text = f.read()
 
-input_text_ls = []
+# input_text_ls = []
 while True:
     received_data, connection = server.accept_connections()
     if received_data is not None:
+        mongo_db = MongoDB('DRC2023_Dialog_DB')
         # ここで受け取ったデータを使用できます
         received_data_ls = eval(received_data)
         unique_id = str(received_data_ls[0])
@@ -35,12 +34,12 @@ while True:
         if received_text == "終了":
             #MongoDBとの接続を解除
             mongo_db.close_connection()
-            input_text_ls = []
+            # input_text_ls = []
             #フロントとの接続を解除
             connection.close()
         else:
-            res = text_nlu.NLU_GPT4(received_text,prompt_text,input_text_ls)
-            input_text_ls.append({"role": "user", "content":received_text})
+            res = text_nlu.NLU_GPT4(received_text,prompt_text,[])
+            # input_text_ls.append({"role": "user", "content":received_text})
             print(res, flush=True)
             mongo_db.update_data(unique_id,json.loads(res))
             
