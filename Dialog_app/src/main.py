@@ -13,11 +13,13 @@ from ServerModules.speech_generation import SpeechGeneration
 from ServerModules.voice_recognition import VoiceRecognition
 from ServerModules.face_expression_generation import ExpressionGeneration
 from ServerModules.motion_generation import MotionGeneration
+from ServerModules.sight_view import SightViewTCPServer
 
 from DialogModules.NLGModule import NLG 
 
 
-from database.mongodb_tools_Dialog import MongoDB,check_db_exists,SightseeingDBHandler,SightViewTCPServer
+from database.mongodb_tools_Dialog import MongoDB,check_db_exists
+from database.mongodb_tools_Sightseeing import SightseeingDBHandler,generate_combinations
 
 
 USE_GPT_API = True
@@ -53,6 +55,7 @@ Dialog_mongodb.insert_initial_data(unique_id) #初期データの追加
 if check_db_exists("Sightseeing_Spot_DB") == False:
     sys.exit("観光地データベースを用意してください")
 Sightseeing_mongodb = SightseeingDBHandler("Sightseeing_Spot_DB")
+
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ロボットサーバ準備 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -91,7 +94,7 @@ Dialog_mongodb.print_collection_data(unique_id)
 # +++++++++++++++++++++++++++++++ 対話開始 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 motion_gen.play_motion("greeting_deep")
-speech_gen.speech_generate("旅行代理店ロボットです．なんでも聞いてください．")
+speech_gen.speech_generate("こんにちは！旅行代理店ロボットです．なんでも聞いてください．")
 user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
 
 user_input_ls = []
@@ -135,45 +138,70 @@ while True:
 
     # LLM用の対話ログ追加
     user_input_log.append({"role": "assistant", "content":response_text})
+    
+    #===================================================================================================
+    # 現状のNLUの結果を出力
     Dialog_mongodb.print_collection_data(unique_id)
-
+    #===================================================================================================
     #観光地絞り込みを行う
     ## 対話DBから現状のJSONを獲得
     data_as_json = Dialog_mongodb.fetch_data_by_id(unique_id)
-    print(data_as_json)
-    
-    trg_Genre = "LGenre"
+    #基準とするコードの作成
     #観光地DBへ検索
-    result_data = Sightseeing_mongodb.fetch_sight_ids(data_as_json,trg_Genre)
-    
-    print("----------")
-    genre_ls = []
-    count_ls_pre_genre = []
-    trg_id_mtx = []
-    for genre_value, ids in result_data.items():
-        print(f"{trg_Genre}: {genre_value}")
-        print("ヒットした観光地の数: ", len(ids))
-        genre_ls.append(genre_value)
-        count_ls_pre_genre.append(len(ids))
-        trg_id_mtx.append(ids)
-        print("----------")
-    print("genre_ls:",genre_ls)
-    print("count_ls_pre_genre:",count_ls_pre_genre)
-    print("trg_id_mtx:",trg_id_mtx)
-    
-    total_genre = len(set((genre_ls)))
-    print(total_genre,min(count_ls_pre_genre, default=0))
-    #　次ステップに行く際の基準式
-    if total_genre >= 2 and min(count_ls_pre_genre, default=0) >= 2:
-        break 
+    all_combinations = generate_combinations(data_as_json)
+    resulting_sight_ids = set()
+    for combination in all_combinations:
+        print("対象クエリ:",combination)
+        condition_json = json.dumps(combination)
+        sight_ids = Sightseeing_mongodb.get_sight_ids_by_multiple_conditions(condition_json)
+        print("結果観光地数:",len(sight_ids))
+        resulting_sight_ids.update(sight_ids)
+    print(list(resulting_sight_ids))
+    #===================================================================================================
+    # 次のフェーズへ行く基準
         
 speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものか，そしてあなたがどんな人かわかりました！それではプランを作成します．少しお待ちください．")
-
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ 2つの観光地を絞り込む ++++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
+print(trg_id_mtx)
 #画面表示するものを送る
 # sightID_ls = [80026003,80026022,80025993,80025990] #これは一例
+
 sightID_ls = [trg_id_mtx[0][0],trg_id_mtx[0][1],trg_id_mtx[1][0],trg_id_mtx[1][1]] #これも一例
 view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
 sight_view.send_data(view_spot_json)
+
+text_sight1_title = f"まずは左上が{Sightseeing_mongodb.get_title_by_sight_id(trg_id_mtx[0][0])}です．"
+
+speech_gen.speech_generate(text_sight1_title)
+
+text_sight1_summary = Sightseeing_mongodb.get_summary_by_sight_id(trg_id_mtx[0][0])
+speech_gen.speech_generate(text_sight1_summary)
+
+text_sight1_title = f"そして右上が{Sightseeing_mongodb.get_title_by_sight_id(trg_id_mtx[0][1])}です．"
+
+speech_gen.speech_generate(text_sight1_title)
+text_sight1_summary = Sightseeing_mongodb.get_summary_by_sight_id(trg_id_mtx[0][1])
+speech_gen.speech_generate(text_sight1_summary)
+
+text_sight1_title = f"さらに左下が{Sightseeing_mongodb.get_title_by_sight_id(trg_id_mtx[1][0])}です．"
+
+speech_gen.speech_generate(text_sight1_title)
+text_sight1_summary = Sightseeing_mongodb.get_summary_by_sight_id(trg_id_mtx[1][0])
+speech_gen.speech_generate(text_sight1_summary)
+
+text_sight1_title = f"最後に右下が{Sightseeing_mongodb.get_title_by_sight_id(trg_id_mtx[1][1])}です．"
+
+speech_gen.speech_generate(text_sight1_title)
+text_sight1_summary = Sightseeing_mongodb.get_summary_by_sight_id(trg_id_mtx[1][1])
+speech_gen.speech_generate(text_sight1_summary)
+
+
+
+
+
+
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 経路作成 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

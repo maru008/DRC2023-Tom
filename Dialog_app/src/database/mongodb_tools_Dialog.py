@@ -4,9 +4,7 @@ from datetime import datetime
 from pymongo import MongoClient
 from tabulate import tabulate
 import pandas as pd
-import json
 
-import socket
 
 class MongoDB:
     """
@@ -155,91 +153,5 @@ def check_db_exists(db_name):
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 観光地DB関連メソッド ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-class SightseeingDBHandler:
-    def __init__(self,db_name):
-        self.client = MongoClient('mongodb://localhost:27017/')
-        self.db = self.client[db_name]
 
-    def build_query(self, base_criteria, genre_value, genre_type="LGenre"):
-        criteria = base_criteria.copy()
-        criteria[genre_type] = [genre_value]
-    
-        query = {}
-    
-        if "LGenre" in criteria and criteria["LGenre"]:
-            query["GenreList.LGenre.Name"] = {"$in": criteria["LGenre"]}
-            
-        if "MGenre" in criteria and criteria["MGenre"]:
-            query["GenreList.MGenre.Name"] = {"$in": criteria["MGenre"]}
-            
-        if "Genre" in criteria and criteria["Genre"]:
-            query["GenreList.Genre.Name"] = {"$in": criteria["Genre"]}
-            
-        if "SightOption" in criteria and criteria["SightOption"]:
-            query["SightOptionList.SightOptionName"] = {"$in": criteria["SightOption"]}
-        
-        # if "Time" in criteria and criteria["Time"]:
-        #     query["Time"] = {"$in": criteria["Time"]}
-            
-        # if "Traffic" in criteria and criteria["Traffic"]:
-        #     query["$or"] = [
-        #         {"Traffic1": {"$in": criteria["Traffic"]}},
-        #         {"Traffic2": {"$in": criteria["Traffic"]}}
-        #     ]
-        return query
-    
-    def fetch_sight_ids(self, criteria, genre_type="LGenre"):
-        collection = self.db['sightseeing_spots']
-        
-        sight_ids = {}
-        
-        for genre_value in criteria[genre_type]:
-            if not genre_value:  # Skip empty values
-                continue
-            query = self.build_query(criteria, genre_value, genre_type)
-            distinct_sight_ids = collection.distinct("SightID", query)
-            sight_ids[genre_value] = distinct_sight_ids
-            
-        return sight_ids
 
-    def id2info_forView(self,SightID):
-        collection = self.db["sightseeing_spots"]
-        data = collection.find_one({'SightID': SightID})
-        # データから各情報を取得
-        if data:
-            title = data['Title']
-            image_files = [photo['URL'] for photo in data['PhotoList']]
-            latitude = data['LatitudeW10']
-            longitude = data['LongitudeW10']
-        else:
-            print(f"No data found for SightID: {SightID}")
-        
-        return title, image_files, latitude, longitude
-    
-    def create_send_json(self,ID_ls):
-        res_json = {}
-        res_json['Num'] = len(ID_ls)
-        for i, ID_i in enumerate(ID_ls):
-            title,image_files,latitude, longitude = self.id2info_forView(ID_i)
-            res_json[f"ImageURL{i+1}"] = f'https://www.j-jti.com/Storage/Image/Product/SightImage/Org/{image_files[0]}'
-            res_json[f"MapURL{i+1}"] = f'https://www.google.co.jp/maps/@{latitude},{longitude},15z'
-            res_json[f"Name{i+1}"] = title
-        return res_json
-        
-class SightViewTCPServer():
-    def __init__(self, ip,port):
-        self.ip = ip
-        self.port = int(port)
-        
-    def send_data(self,dictsite):
-        sock = socket.socket(socket.AF_INET)
-        sock.connect((self.ip, self.port))
-        
-        json_data = json.dumps(dictsite).encode('utf-8')
-        sock.send(json_data)
-        print("send view data")
-
-        rcv_data = sock.recv(128)            
-        rcv_data = rcv_data.decode('utf-8')
-        rcvdict = json.loads(rcv_data)
-        print("result: " + rcvdict['Return'])

@@ -37,7 +37,7 @@ new_json_string = json.dumps(new_json_data, ensure_ascii=False, indent=4)
 
 # 新しいJSON文字列を出力（またはファイルに保存）
 
-
+print(new_json_string)
 
 RobotNLG = NLG(config)
 
