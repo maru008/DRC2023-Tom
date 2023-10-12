@@ -1,6 +1,6 @@
 import os
 import json
-
+import re
 from utils.TCP_Server_data import Server
 from utils.config_reader import read_config
 from utils.mongodb_tool_NLU import MongoDB
@@ -41,6 +41,8 @@ while True:
             res = text_nlu.NLU_GPT4(received_text,prompt_text,[])
             # input_text_ls.append({"role": "user", "content":received_text})
             print(res, flush=True)
+            # 正規表現を使用して中括弧で囲まれた部分を抽出
+            res = new_text = re.sub(r'[^{]*({[^}]*})[^{]*', r'\1', res)
             mongo_db.update_data(unique_id,json.loads(res))
             
             connection.close()

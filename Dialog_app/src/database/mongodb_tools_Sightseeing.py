@@ -88,7 +88,7 @@ class SightseeingDBHandler:
         # データから各情報を取得
         if data:
             title = data['Title']
-            image_files = [photo['URL'] for photo in data['PhotoList']]
+            image_files = [photo.get('URL') for photo in data.get('PhotoList', []) if photo.get('URL') is not None]
             latitude = data['LatitudeW10']
             longitude = data['LongitudeW10']
         else:
@@ -101,7 +101,10 @@ class SightseeingDBHandler:
         res_json['Num'] = len(ID_ls)
         for i, ID_i in enumerate(ID_ls):
             title,image_files,latitude, longitude = self.id2info_forView(ID_i)
-            res_json[f"ImageURL{i+1}"] = f'https://www.j-jti.com/Storage/Image/Product/SightImage/Org/{image_files[0]}'
+            if (image_files is None) or len(image_files) == 0:
+                res_json[f"ImageURL{i+1}"] = 'None'
+            else:
+                res_json[f"ImageURL{i+1}"] = f'https://www.j-jti.com/Storage/Image/Product/SightImage/Org/{image_files[0]}'
             res_json[f"MapURL{i+1}"] = f'https://www.google.co.jp/maps/@{latitude},{longitude},15z'
             res_json[f"Name{i+1}"] = title
         return res_json
@@ -114,8 +117,7 @@ class SightseeingDBHandler:
         :param sight_id: サマリーを取得する観光地のSightID
         :return: 観光地のサマリー(文字列)。該当するデータがない場合はNoneを返します。
         """
-        collection = self.db["sightseeing_spots"]
-        result = collection.find_one({"SightID": sight_id}, {"_id": 0, "Summary": 1})
+        result = self.collection.find_one({"SightID": sight_id}, {"_id": 0, "Summary": 1})
 
         if result:
             return result["Summary"]
@@ -125,15 +127,28 @@ class SightseeingDBHandler:
         """
         指定されたSightIDに対応する観光地のタイトルを取得します。
 
-        :param collection_name: クエリを実行するコレクションの名前
         :param sight_id: タイトルを取得する観光地のSightID
         :return: 観光地のタイトル（文字列）。該当するデータがない場合はNoneを返します。
         """
-        collection = self.db["sightseeing_spots"]
-        result = collection.find_one({"SightID": sight_id}, {"_id": 0, "Title": 1})
+        result = self.collection.find_one({"SightID": sight_id}, {"_id": 0, "Title": 1})
 
         if result:
             return result["Title"]
+        else:
+            return None
+    def get_coordinates_by_sight_id(self, sight_id):
+        """
+        指定されたSightIDに対応する観光地の緯度と経度を取得します。
+
+        :param collection_name: クエリを実行するコレクションの名前
+        :param sight_id: 緯度と経度を取得する観光地のSightID
+        :return: 緯度と経度のリスト。該当するデータがない場合はNoneを返します。
+        """
+        result = self.collection.find_one({"SightID": sight_id}, {"_id": 0, "Latitude": 1, "Longitude": 1})
+
+        if result and "Latitude" in result and "Longitude" in result:
+            # 緯度と経度をfloat型に変換してから返す
+            return float(result["Latitude"]), float(result["Longitude"])
         else:
             return None
           
