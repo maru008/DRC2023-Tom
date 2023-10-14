@@ -14,21 +14,10 @@ from ServerModules.motion_generation import MotionGeneration
 
 from DialogModules.NLGModule import NLG 
 
-
-from Dialog_app.src.database.mongodb_tools_Dialog import MongoDB
-
 config = read_config()
 IP = config.get("Server_Info","Server_ip")
+DIALOG_MODE = "robot_dialog"
 
-user_input_val = input("コマンド対話モードを実行しますか (y/n)?")
-if user_input_val == "y":
-    DIALOG_MODE = "console_dialog"
-    SectionPrint("コンソール対話モード")
-elif user_input_val == "n":
-    DIALOG_MODE = "robot_dialog"
-    SectionPrint("ロボット対話モード")
-else:
-    sys.exit('正しく入力してください')
 
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
 
@@ -59,12 +48,16 @@ motion_list = [
     "nod_deep",
 ]
 
-print("====================================")
-for motion_id in motion_list:
-    print(f"motionID : {motion_id}")
-    time.sleep(1)
-    motion_gen.play_motion(motion_id)
-    time.sleep(4)
-    print("====================================")
+# print("====================================")
+# for motion_id in motion_list[0:2]:
+#     print(f"motionID : {motion_id}")
+#     time.sleep(1)
+#     motion_gen.play_motion(motion_id)
+#     time.sleep(4)
+#     print("====================================")
 
-motion_gen.play_motion("InitialPosition")
+# motion_gen.play_motion("InitialPosition")
+
+motion_gen.move_max_right()
+time.sleep(4)
+motion_gen.reset_body()
