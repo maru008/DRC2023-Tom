@@ -122,7 +122,7 @@ while True:
     
     # GPTを使うかどうか
     if USE_GPT_API:
-        response_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
+        response_text = RobotNLG.GPT4(user_input_text,ChatGPT_prompt_text,user_input_log)
     else:
         response_text = user_input_text+"ってなんですか？"
         
