@@ -15,7 +15,7 @@ from ServerModules.face_expression_generation import ExpressionGeneration
 from ServerModules.motion_generation import MotionGeneration
 
 from DialogModules.NLGModule import NLG 
-
+from DialogModules.Add_Hesitation import add_hesitation
 
 from database.mongodb_tools_Dialog import MongoDB,check_db_exists,SightseeingDBHandler,SightViewTCPServer
 
@@ -118,7 +118,8 @@ while True:
         
     #===================================================================================================
     # 非同期処理開始
-    speech_thread = threading.Thread(target=async_speech_generate, args=(response_text,))#発話指示
+    fillered_response_text = add_hesitation(response_text)
+    speech_thread = threading.Thread(target=async_speech_generate, args=(fillered_response_text,))#発話指示
     send_data_thread = threading.Thread(target=async_send_data, args=(str([unique_id, user_input_text]),))#NLUサーバに文字列を送る（DBへの追加は向こう側）
     
     speech_thread.start()

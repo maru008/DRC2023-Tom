@@ -1,6 +1,6 @@
 import json
 
-from Dialog_app.src.database.mongodb_tools_Dialog import MongoDB
+from mongodb_tools_Dialog import MongoDB
 
 mongodb = MongoDB("Sightseeing_Spot_DB")
 

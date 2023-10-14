@@ -2,3 +2,5 @@ pymongo
 openai
 tabulate
 pandas
+sudachipy
+sudachidict_core
