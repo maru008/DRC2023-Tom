@@ -18,6 +18,11 @@ python -m venv .venv #.venvにすることでgitにコミットされない
 source .venv/bin/activate
 pip install -r Dialog_app/requirements.txt
 ```
+または
+```
+.venv\Scripts\activate
+python -m pip install -r Dialog_app/requirements.txt
+```
 対話プログラム（start_dialog.sh）は以降この環境で実行．
 ---
 ## 設定項目
@@ -38,12 +43,13 @@ RURUBU = *************
 GOOGLE = *************
 
 [Server_Info]
-Server_ip = 192.168.2.213
+Server_ip = 172.22.137.149
 SpeechRecognition_port = 8888
 SpeechGenerator_port = 3456
 RobotExpressionController_port = 20000
 RobotBodyController_port = 21000
 FaceRecognition_port = 4500
+SiteViewer_port = 25000
 ```
 
 ---
@@ -60,5 +66,12 @@ python CityGraph_app/src/data_preparation.py
 実行は以下のシェルファイルを実行する．
 - start_server.sh
 - start_dialog.sh
+または
+```
+docker-compose build
+docker-compose up -d
+cd ./Dialog_app
+python src/main.py $interactive_mode{y/n}
+```
 
 コマンド対話モードを使用しますか？(y/n)を聞かれるので，会話だけをしたい時はy．サーバ接続をして試したい時はnを入力する．
