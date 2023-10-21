@@ -188,15 +188,19 @@ speech_gen.speech_generate("ありがとうございます．今回の旅行が�
 #画面表示するものを送る
 # sightID_ls = [80026003,80026022,80025993,80025990] #これは一例
 print("select 4 spot")
-if len(resulting_sight_id_mtx) <= 1 and len(resulting_sight_id_mtx[0])<4:
+if len(resulting_sight_id_mtx) == 0:
     sightID_ls = [80026003,80026022,80025993,80025990] 
+    speech_gen.speech_generate("申し訳ありません．お客様に合致した観光地を見つけることができませんでした．今回は京都で代表的な観光地を上げさせていただきます．")
 else:
-    sightID_ls = select4spot(resulting_sight_id_mtx)
+    if  len(resulting_sight_id_mtx[0])<4:
+        sightID_ls = [80026003,80026022,80025993,80025990]
+        speech_gen.speech_generate("申し訳ありません．お客様に合致した観光地を見つけることができませんでした．今回は京都で代表的な観光地を上げさせていただきます．")
+    else:
+        sightID_ls = select4spot(resulting_sight_id_mtx)
 print("選ばれたIDリスト：",sightID_ls)
 #画像表示サーバにデータを送る============================================================================
 view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
 sight_view.send_data(view_spot_json)
-
 #  観光地紹介用GPT============================================================================
 SpotIntro_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/Spot_intro.txt")
 with open(SpotIntro_prompt_path, 'r', encoding='utf-8') as f:
