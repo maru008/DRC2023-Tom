@@ -65,7 +65,7 @@ speech_gen = SpeechGeneration(DIALOG_MODE,IP,config.get("Server_Info","SpeechGen
 voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"))
 face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
-sight_view = SightViewTCPServer(IP,config.get("Server_Info","SiteViewer_port"))
+sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================

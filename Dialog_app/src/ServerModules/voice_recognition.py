@@ -16,27 +16,46 @@ class VoiceRecognition:
         if self.DIALOG_MODE == "robot_dialog":
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((self.ip, self.port))
+            self.start_listen()
+            
+            final_results = []
+            
             while True:
-                self.listen_once()
-                while True:
-                    if not self.received_stack:
-                        time.sleep(0.1)
-                        continue
-                    result = self.received_stack.pop(0)
-                    # print(result)
-                    if result["type"] == "silent" or (result["type"] == "final" and result["user_utterance"] == "" and result["confidence"] < confidence_threshold):
-                        self.received_stack.clear()
-                        break
-                    if result["type"] in ["final", "failed"]:
-                        if result["user_utterance"] != "" and result["confidence"] >= confidence_threshold:
-                            break
+                received_data = self.sock.recv(1024)
+                if not received_data:
+                    continue
+                
+                result = self._parse_data(received_data)
+                print(result)
+                if result["type"] in ["final", "failed"] and result["user_utterance"] != "" and result["confidence"] >= confidence_threshold:
+                    print("User: ", result["user_utterance"])
+                    final_results.append(result["user_utterance"])
+                    start_time = time.time()  # 現在の時間を記録
+                    while True:
+                        if time.time() - start_time > 4:  # n秒以上経過したか確認
+                            break  # 2秒以上経っていれば、whileループを抜ける
 
-                if result["type"] in ["final", "failed"]:
-                    if result["user_utterance"] != "" and result["confidence"] >= confidence_threshold:
-                        break
+                        # 新しいデータがあるかどうかを確認する
+                        self.sock.setblocking(0)  # ノンブロッキングモードに設定
+                        try:
+                            new_data = self.sock.recv(1024)  # 新しいデータを受け取る
+                            if new_data:
+                                new_result = self._parse_data(new_data)  # 新しいデータを解析
+                                if new_result["type"] in ["final", "failed"] and new_result["user_utterance"] != "" and new_result["confidence"] >= confidence_threshold:
+                                    print("Additional input received: ", new_result["user_utterance"])
+                                    final_results.append(result["user_utterance"])
+                                    result = new_result  # 更新された結果を保存
+                                    start_time = time.time()  # タイマーをリセット
+                        except socket.error:
+                            # データがなければここに来る
+                            pass
+                        time.sleep(0.1)  # 短いスリープでループを遅らせる
+                    break
+
+            self.stop_listen()
             self.sock.close()
-            User_res_text = result["user_utterance"]
-            print("User: ",User_res_text)
+            User_res_text = ' '.join(final_results)
+            print("All User Text: ",User_res_text)
             return User_res_text
 
         elif self.DIALOG_MODE == "console_dialog":
