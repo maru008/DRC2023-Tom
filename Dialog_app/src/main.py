@@ -26,7 +26,7 @@ from database.mongodb_tools_Sightseeing import SightseeingDBHandler,generate_com
 
 
 USE_GPT_API = True
-
+ADD_HESITATION = False
 ##引数情報を取得
 config = read_config()
 IP = config.get("Server_Info","Server_ip")
@@ -44,6 +44,9 @@ else:
 console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
 if console_input == "n":
     USE_GPT_API = False
+console_input = input("いい淀みを付与しますか？:(y/n)")
+if console_input == "y":
+    ADD_HESITATION = True
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ データベース準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -83,16 +86,13 @@ with open(Dialog_prompt_path, 'r', encoding='utf-8') as f:
     # ファイルの内容を読み込む
     ChatGPT_prompt_text = f.read()
 #===================================================================================================
-# +++++++++++++++++++++++++++++++ 非同期処理用 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+# +++++++++++++++++++++++++++++++ 非同期処理用関数 +++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 def async_speech_generate(text):
     speech_gen.speech_generate(text)
     
 def async_send_data(data):
     socket_conn.send_data(data)
-
-
-Dialog_mongodb.print_collection_data(unique_id)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 対話開始 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -133,8 +133,9 @@ while True:
         
     #===================================================================================================
     # 非同期処理開始
-    fillered_response_text = add_hesitation(response_text)
-    speech_thread = threading.Thread(target=async_speech_generate, args=(fillered_response_text,))#発話指示
+    if ADD_HESITATION:#いい淀みを付与
+        response_text = add_hesitation(response_text)
+    speech_thread = threading.Thread(target=async_speech_generate, args=(response_text,))#発話指示
     send_data_thread = threading.Thread(target=async_send_data, args=(str([unique_id, user_input_text]),))#NLUサーバに文字列を送る（DBへの追加は向こう側）
     
     speech_thread.start()
