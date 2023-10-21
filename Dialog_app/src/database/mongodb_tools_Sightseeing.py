@@ -144,11 +144,11 @@ class SightseeingDBHandler:
         :param sight_id: 緯度と経度を取得する観光地のSightID
         :return: 緯度と経度のリスト。該当するデータがない場合はNoneを返します。
         """
-        result = self.collection.find_one({"SightID": sight_id}, {"_id": 0, "Latitude": 1, "Longitude": 1})
+        result = self.collection.find_one({"SightID": sight_id}, {"_id": 0, "LatitudeW10": 1, "LongitudeW10": 1})
 
-        if result and "Latitude" in result and "Longitude" in result:
+        if result and "LatitudeW10" in result and "LongitudeW10" in result:
             # 緯度と経度をfloat型に変換してから返す
-            return float(result["Latitude"]), float(result["Longitude"])
+            return float(result["LatitudeW10"]), float(result["LongitudeW10"])
         else:
             return None
           

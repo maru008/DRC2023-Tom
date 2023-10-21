@@ -9,7 +9,7 @@ import threading
 from utils.config_reader import read_config
 from utils.general_tool import SectionPrint
 from utils.TCPserver import SocketConnection
-from utils.Google_Route_Search import search_route
+from utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import *
 
 from ServerModules.speech_generation import SpeechGeneration
@@ -220,7 +220,8 @@ def async_speach_view_monitor(head_text, title, results, index):
 
 def async_intro_spot(spotdesc_text):
     global response_from_intro_spot
-    response_text = RobotNLG.ChatGPT(spotdesc_text,SpotIntroGPT_prompt_text,[])
+    # response_text = RobotNLG.ChatGPT(spotdesc_text,SpotIntroGPT_prompt_text,[])
+    response_text = "省略"
     response_from_intro_spot = response_text
     return response_text
 
@@ -285,54 +286,47 @@ while True:
         speech_gen.speech_generate(speach_text)
         
 trg2spotTitle = [Sightseeing_mongodb.get_title_by_sight_id(sightID_i) for sightID_i in trg2spotid]
-#画像表示サーバに2つの観光地データを送る-----------------------------------------------------------------------------
-sight_view.send_data(Sightseeing_mongodb.create_send_json(trg2spotid))
-
-speech_gen.speech_generate(f"ありがとうございます．お客様が行きたいスポットは{trg2spotTitle[0]}と{trg2spotTitle[1]}ですね．")
-speech_gen.speech_generate("それではそれにあった経路を今から調べます．少しお待ちください．")
-
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 経路作成 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-#ここまでで二つの観光地を決めることができたと仮定
-#以下は例
-# lat1, long1 = 35.062358211, 135.736914797
-# lat2, long2 = 35.060411266, 135.75270778
-lat1, long1 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[0])
-lat2, long2 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[1])
-print(lat1, long1)
-print(lat2, long2)
-mode = "driving"
-res_data = search_route(lat1, long1, lat2, long2, config.get("API_Key","Google"), mode)
-new_json_data = {
-    "directions": []
-}
-
-# 必要な情報を取り出して新しいJSONデータに追加
-for route in res_data["routes"]:
-    for leg in route["legs"]:
-        for step in leg["steps"]:
-            direction = {
-                "distance": step["distance"]["text"],
-                "duration": step["duration"]["text"],
-                "instructions": step["html_instructions"]
-            }
-            new_json_data["directions"].append(direction)
-
-# 辞書をJSON文字列に変換
-new_json_string = json.dumps(new_json_data, ensure_ascii=False, indent=4)
-print(new_json_string)
-
+#経路案内用プロンプト
 route_search_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/For_route_search.txt")
 with open(route_search_prompt_path, 'r', encoding='utf-8') as f:
     # ファイルの内容を読み込む
     routeInfo_prompt_text = f.read()
 
-response_text = RobotNLG.ChatGPT(str(new_json_string),routeInfo_prompt_text,[])
+def async_speach_spot(trg2spotid,trg2spotTitle):
+    speech_gen.speech_generate(f"ありがとうございます．お客様が行きたいスポットは{trg2spotTitle[0]}と{trg2spotTitle[1]}ですね．")
+    sight_view.send_data(Sightseeing_mongodb.create_send_json(trg2spotid))
+    speech_gen.speech_generate("それではこの店から出発し，いちにちで巡り帰ってくるプランを検索いたします．少しお待ちください．")
 
-speech_gen.speech_generate(f"{trg2spotTitle[0]}から{trg2spotTitle[1]}への行き方は次の通りです．")
-speech_gen.speech_generate(response_text)
+def async_search_route(trg2spotid):
+    global route_desc_text
+    lat1, long1 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[0])
+    lat2, long2 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[1])
 
+    NAVITME_serach = NAVITME(config,lat1, long1, lat2, long2)
+    journey_ls = NAVITME_serach.get_route_text(0)#この0は候補の番目
+
+    route_info_json = {
+        "start_end_spot":["JTBユニモール名古屋","JTBユニモール名古屋"],
+        "via_spot":trg2spotTitle,
+        "route_desc":journey_ls,
+    }
+    response_text = RobotNLG.GPT4(str(route_info_json),routeInfo_prompt_text,[])
+    route_desc_text = response_text
+    
+#並列処理--------------------------------------------------------------------------------------------
+print("start multi-thread processing (speach and serach route)")
+thread1 = threading.Thread(target=async_speach_spot, args=(trg2spotid,trg2spotTitle))
+thread2 = threading.Thread(target=async_search_route, args=(trg2spotid,))
+# スレッドを開始
+thread1.start()
+thread2.start()
+# ここで、両方のスレッドが終了するのを待ちます
+thread1.join()
+thread2.join()
+speech_gen.speech_generate(route_desc_text)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 終わりの挨拶 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
