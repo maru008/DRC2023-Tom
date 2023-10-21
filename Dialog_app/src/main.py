@@ -2,6 +2,7 @@
 import os
 import sys
 from datetime import datetime
+import time
 import json
 import threading
 
@@ -98,7 +99,7 @@ Dialog_mongodb.print_collection_data(unique_id)
 motion_gen.play_motion("greeting_deep")
 speech_gen.speech_generate("""こんにちは！旅行代理店ロボットのしょうこです．
                            今回お客様は京都への旅行を考えていると聞きました．
-                           私との会話でお客さんに最適な観光地を見つけるお手伝いをします！
+                           私との会話でお客様に最適な観光地を見つけるお手伝いをします！
                            何か旅行で体験したいことなどを教えて下さい．
                            よろしくお願いします．
                            """)
@@ -244,6 +245,7 @@ for i,sightID_i in enumerate(sightID_ls):
     thread1.join()
     thread2.join()
     speech_gen.speech_generate(response_from_intro_spot)
+    time.sleep(1)
 now_screen_state = '\n'.join(spoken_texts)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
@@ -271,6 +273,9 @@ while True:
     print("得られたIDのリスト：",trg2spotid)
     if len(trg2spotid) == 2:
         break
+    elif len(trg2spotid) <= 1:
+        speach_text = "すみません,2つを選んでください．もう一度お願いします．"
+        speech_gen.speech_generate(speach_text)
     elif len(trg2spotid) > 2:
         speach_text = "すみません,2つに絞ってください．もう一度お願いします．"
         speech_gen.speech_generate(speach_text)
@@ -279,6 +284,9 @@ while True:
         speech_gen.speech_generate(speach_text)
         
 trg2spotTitle = [Sightseeing_mongodb.get_title_by_sight_id(sightID_i) for sightID_i in trg2spotid]
+#画像表示サーバに2つの観光地データを送る-----------------------------------------------------------------------------
+sight_view.send_data(Sightseeing_mongodb.create_send_json(trg2spotid))
+
 speech_gen.speech_generate(f"ありがとうございます．お客様が行きたいスポットは{trg2spotTitle[0]}と{trg2spotTitle[1]}ですね．")
 speech_gen.speech_generate("それではそれにあった経路を今から調べます．少しお待ちください．")
 
@@ -328,7 +336,7 @@ speech_gen.speech_generate(response_text)
 # +++++++++++++++++++++++++++++++ 終わりの挨拶 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 
-speech_gen.speech_generate("以上で案内を終了します．")
+speech_gen.speech_generate("以上で案内を終了します．ありがとうございました．")
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 会話終了後の処理 ++++++++++++++++++++++++++++++++++++++++++++++++++++
