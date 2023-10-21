@@ -32,7 +32,7 @@ class VoiceRecognition:
                     final_results.append(result["user_utterance"])
                     start_time = time.time()  # 現在の時間を記録
                     while True:
-                        if time.time() - start_time > 4:  # n秒以上経過したか確認
+                        if time.time() - start_time > 3:  # n秒以上経過したか確認
                             break  # 2秒以上経っていれば、whileループを抜ける
 
                         # 新しいデータがあるかどうかを確認する
@@ -49,7 +49,7 @@ class VoiceRecognition:
                         except socket.error:
                             # データがなければここに来る
                             pass
-                        time.sleep(0.1)  # 短いスリープでループを遅らせる
+                        time.sleep(0.01)  # 短いスリープでループを遅らせる
                     break
 
             self.stop_listen()

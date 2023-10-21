@@ -99,11 +99,15 @@ motion_gen.play_motion("greeting_deep")
 speech_gen.speech_generate("""こんにちは！旅行代理店ロボットのしょうこです．
                            今回お客様は京都への旅行を考えていると聞きました．
                            私との会話でお客さんに最適な観光地を見つけるお手伝いをします！
-                           何か旅行で体験したいことなどを教えて下さい．よろしくお願いします．""")
+                           何か旅行で体験したいことなどを教えて下さい．
+                           よろしくお願いします．
+                           """)
 user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
 
 user_input_ls = []
 system_output_text = []
+
+resulting_sight_id_mtx = []
 
 Dialog_turn_num = 0
 
@@ -157,7 +161,7 @@ while True:
     #基準とするコードの作成
     #観光地DBへ検索
     all_combinations = generate_combinations(data_as_json)
-    resulting_sight_id_mtx = []
+    
     for combination in all_combinations:
         print("対象クエリ:",combination)
         condition_json = json.dumps(combination)
@@ -206,47 +210,47 @@ SpotIntro_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/Spot_intr
 with open(SpotIntro_prompt_path, 'r', encoding='utf-8') as f:
     SpotIntroGPT_prompt_text = f.read()
 # 非同期処理用の関数============================================================================
-def speach_view_monitor(head_text,title):
-    speach_text = head_text  + title + "の写真と地図です．"
-    speech_gen.speech_generate(speach_text)
-    return speach_text
 
-def intro_spot(spotdesc_text):
-    # global response_from_intro_spot
+def async_speach_view_monitor(head_text, title, results, index):
+    speach_text = head_text  + title + "の写真と地図です．ご覧ください．"
+    speech_gen.speech_generate(speach_text)
+    results[index] = speach_text
+
+def async_intro_spot(spotdesc_text):
+    global response_from_intro_spot
     response_text = RobotNLG.ChatGPT(spotdesc_text,SpotIntroGPT_prompt_text,[])
-    # response_from_intro_spot = response_text
+    response_from_intro_spot = response_text
     return response_text
 
 # 観光地の紹介を開始============================================================================
 head_text_ls = ["まず左上は，","次に右上は，","その左下は，","最後に右下は，"]
-now_screen_state = ""
 sightTitle_ls = []
+# 結果を保存するためのリストを用意
+spoken_texts = [None] * len(sightID_ls)
 for i,sightID_i in enumerate(sightID_ls):
     title_i = Sightseeing_mongodb.get_title_by_sight_id(sightID_i)
     sightTitle_ls.append(title_i)
-    spoken_text = speach_view_monitor(head_text_ls[i],title_i)
-    now_screen_state += spoken_text
     #DBから説明文取得
     desc_i = Sightseeing_mongodb.get_summary_by_sight_id(sightID_i)
-    response_from_intro_spot = intro_spot(desc_i)
-    # thread1 = threading.Thread(target=speach_view_monitor, args=(head_text_ls[i], title_i))
-    # thread2 = threading.Thread(target=intro_spot, args=(desc_i,))
+    
+    thread1 = threading.Thread(target=async_speach_view_monitor, args=(head_text_ls[i], title_i, spoken_texts, i))
+    thread2 = threading.Thread(target=async_intro_spot, args=(desc_i,))
 
-    # # スレッドを開始
-    # thread1.start()
-    # thread2.start()
+    # スレッドを開始
+    thread1.start()
+    thread2.start()
 
-    # # ここで、両方のスレッドが終了するのを待ちます
-    # thread1.join()
-    # thread2.join()
+    # ここで、両方のスレッドが終了するのを待ちます
+    thread1.join()
+    thread2.join()
     speech_gen.speech_generate(response_from_intro_spot)
-
+now_screen_state = '\n'.join(spoken_texts)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 speech_gen.speech_generate("これら４つの観光地から二つの観光地を選んでください，よろしくお願いします．")
-#二つの観光地を選ぶ段階
 
+#二つの観光地を選ぶ段階
 title_id_json = dict(zip(sightID_ls, sightTitle_ls))
 print(title_id_json)
 choice_two_spot_prompt = f'''
