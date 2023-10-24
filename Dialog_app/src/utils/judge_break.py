@@ -1,14 +1,22 @@
 
 def judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_time):
     """
-    最初の質問応答ループの抜ける条件
-    ・対話ターンが5以上 (早く終わらないように)
-    ・推薦できている観光地が多い
-        ・
-    ・時間が五分を終えらた強制終了
-    
-    出力
-    ・True or False (Trueなら次のフェーズへ行く)
+    この関数は、対話の状態に基づいて、ループを抜けるかどうかを判断します。
+    以下の条件のいずれかがTrueの場合、この関数はTrueを返します：
+
+    1. 経過時間が300秒を超える場合 (5分を超える場合)。
+    2. 対話のターン数が5を超え、推薦される観光地のカテゴリーが1つ以上存在し、
+       かつそのカテゴリーに4つ以上の観光地が含まれる場合。
+
+    変数の説明:
+    - 経過時間 (elapsed_time) は、現在の時間 (current_time) から開始時間 (start_time) を差し引いたものです。
+    - 対話のターン数 (Dialog_turn_num) は、対話が開始されてからのターンの総数です。
+    - resulting_sight_id_mtx は、推薦される観光地のカテゴリーを含むリストです。
+      このリストのサイズ (len(resulting_sight_id_mtx)) がカテゴリーの数を示します。
+      各カテゴリーの観光地の数は、そのカテゴリーのリストの長さ (例: len(resulting_sight_id_mtx[0])) によって示されます。
+
+    返り値:
+    - True または False。Trueが返された場合、対話は次のフェーズに進みます。
     """
     # 経過時間を計算
     elapsed_time = (current_time - start_time).seconds

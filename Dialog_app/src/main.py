@@ -7,7 +7,7 @@ import json
 import threading
 
 from utils.config_reader import read_config
-from utils.general_tool import SectionPrint
+from utils.general_tool import SectionPrint,elapsed_time
 from utils.TCPserver import SocketConnection
 from utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import change_subject,select4spot
@@ -120,9 +120,9 @@ while True:
     print(f"roop break judge:{Judge_change_subject_bool}, change subject judge:{Judge_change_subject_bool}")
     #可変プロンプト定義
     if Judge_break_bool or Judge_change_subject_bool: #この時は必ず会話を終える形にしないといけないので，聞き返さない．
-        ChatGPT_prompt_text += "\nこの対話は相手が応答できる形で終えてください。つまり，話題を続ける質問を返すことです．"
-    else:
         ChatGPT_prompt_text += "\nこの対話は相手が応答できない形で終えてください。つまり，話題を終える会話をすることです．"
+    else:
+        ChatGPT_prompt_text += "\nこの対話は相手が応答できる形で終えてください。つまり，話題を続ける質問を返すことです．"
     # 発話認識
     motion_gen.play_motion("nod_slight")
     user_input_text = voice_recog.recognize()
@@ -172,10 +172,11 @@ while True:
     all_combinations = generate_combinations(data_as_json)
     
     for combination in all_combinations:
+        print(combination)
         if str(combination) not in already_serach_json:
             condition_json = json.dumps(combination)
             sight_ids = Sightseeing_mongodb.get_sight_ids_by_multiple_conditions(condition_json)
-            if len(sight_ids) > 2 and len(sight_ids) < 100:
+            if len(sight_ids) >= 2 and len(sight_ids) < 100:
                 print("対象クエリ:",combination)
                 print("結果観光地数:",len(sight_ids))
                 resulting_sight_id_mtx.append(sight_ids)
@@ -195,7 +196,7 @@ while True:
             user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
             user_input_log.append({"role": "assistant", "content":response_text})
     # 時間表示
-    elapsed_time_ms = int((current_time - start_time).total_seconds() * 1000)
+    elapsed_time_ms = elapsed_time(start_time)
     minutes, remaining_ms = divmod(elapsed_time_ms, 60000)
     seconds, milliseconds = divmod(remaining_ms, 1000)
     print(f'Time> {minutes}:{seconds:02d}:{milliseconds:02d}')
@@ -446,16 +447,14 @@ while True:
     systyem_output_text = qa(user_input_text)["answer"]
     speech_gen.speech_generate(systyem_output_text)
     
-    if i >= 3:
+    # 経過時間が10分を超えたらループを終了
+    if elapsed_time(start_time) > 10* 60 *1000:
         break
-    i += 1
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 終わりの挨拶 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 motion_gen.play_motion("greeting_deep")
-speech_gen.speech_generate("以上で案内を終了します．ありがとうございました．")
-
-
+speech_gen.speech_generate("申し訳ありません，非常に名残惜しいですが，お時間となってしまいました．以上で案内を終了します．ありがとうございました．")
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 会話終了後の処理 ++++++++++++++++++++++++++++++++++++++++++++++++++++
