@@ -361,7 +361,7 @@ def async_speach_spot(trg2spotid,trg2spotTitle):
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
 
-def async_search_route(trg2spotid):
+def async_search_route(trg2spotTitle):
     global route_desc_text
 
     journey_ls = NAVITME_serach.get_route_text(0)#この0は候補の番目
@@ -377,7 +377,7 @@ def async_search_route(trg2spotid):
 #並列処理--------------------------------------------------------------------------------------------
 print("-------------start multi-thread processing (speach and serach route)-------------")
 thread1 = threading.Thread(target=async_speach_spot, args=(trg2spotid,trg2spotTitle))
-thread2 = threading.Thread(target=async_search_route, args=(trg2spotid,))
+thread2 = threading.Thread(target=async_search_route, args=(trg2spotTitle,))
 # スレッドを開始
 thread1.start()
 thread2.start()
@@ -440,7 +440,6 @@ retriever = vectorstore.as_retriever()
 memory = ConversationSummaryMemory(llm=llm,memory_key="chat_history",return_messages=True)
 qa = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memory=memory)
 
-i = 0
 while True:
     user_input_text = voice_recog.recognize()
     
