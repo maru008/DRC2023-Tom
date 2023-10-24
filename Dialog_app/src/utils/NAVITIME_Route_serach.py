@@ -17,6 +17,18 @@ NAVITIME_move_define = {
   "shuttle_bus": "長距離バス"
 }
 
+way_ls = [
+    "domestic_flight",      #航空路線
+    "superexpress_train",   #新幹線
+    "sleeper_ultraexpress", #寝台特急
+    "ultraexpress_train",   #特急
+    "express_train",        #急行
+    "rapid_train",          #快速
+    "semiexpress_train",    #有料列車
+    "local_train",          #普通列車
+    "shuttle_bus"           #長距離バス
+]
+
 class NAVITME:
     def __init__(self,config,lat_spot1,long_spot1,lat_spot2,Long_spot2):
         self.X_RapidAPI_Key = config.get("API_Key","NAVITIME")
@@ -27,7 +39,8 @@ class NAVITME:
         self.long_spot1 = str(long_spot1)
         self.lat_spot2 = str(lat_spot2)
         self.Long_spot2 = str(Long_spot2)
-    def request_NAVITIME(self):
+    def request_NAVITIME(self,transport_way):
+        
         url = "https://navitime-route-totalnavi.p.rapidapi.com/route_transit"
         querystring = {
                     "start":f"{self.START_LAT},{self.START_LONG}",

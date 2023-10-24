@@ -331,6 +331,10 @@ Dialog_mongodb.update_data(unique_id,User_going_spot)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 経路作成 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
+lat1, long1 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[0])
+lat2, long2 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[1])
+NAVITME_serach = NAVITME(config,lat1, long1, lat2, long2)
+
 #経路案内用プロンプト
 route_search_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/For_route_search.txt")
 with open(route_search_prompt_path, 'r', encoding='utf-8') as f:
@@ -342,16 +346,13 @@ def async_speach_spot(trg2spotid,trg2spotTitle):
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
     sight_view.send_data(Sightseeing_mongodb.create_send_json(trg2spotid))
-    speach_t = "それではこの店から出発し，いちにちで巡り帰ってくるプランを検索いたします．少しお待ちください．"
+    speach_t = "それではこの店から出発し，公共交通機関で観光地を巡り，帰ってくるプランを検索いたします．少しお待ちください．"
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
 
 def async_search_route(trg2spotid):
     global route_desc_text
-    lat1, long1 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[0])
-    lat2, long2 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[1])
 
-    NAVITME_serach = NAVITME(config,lat1, long1, lat2, long2)
     journey_ls = NAVITME_serach.get_route_text(0)#この0は候補の番目
 
     route_info_json = {
