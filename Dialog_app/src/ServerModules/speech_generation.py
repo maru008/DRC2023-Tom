@@ -25,7 +25,7 @@ class SpeechGeneration:
                     "speaker": "Mizuki",
                     "duration-information": False,
                     "speechmark": False,
-                    "text": "<speak>" + text + "</speak>"
+                    "text": "<speak>" + text.replace("$", "<break time=\"0.2s\"/>") + "</speak>"
                 }
                 command = json.dumps(command_dict)
                 self._send_command(command)
