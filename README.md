@@ -62,16 +62,15 @@ python CityGraph_app/src/data_preparation.py
 ```
 
 ---
-## コンテナ起動
-実行は以下のシェルファイルを実行する．
-- start_server.sh
-- start_dialog.sh
-または
+## 実行方法
+実行は以下のファイルを実行する．
+mac or linux環境
 ```
-docker-compose build
-docker-compose up -d
-cd ./Dialog_app
-python src/main.py $interactive_mode{y/n}
+start_dialog.sh
+```
+Windows環境
+```
+start_dialog.bat
 ```
 
 コマンド対話モードを使用しますか？(y/n)を聞かれるので，会話だけをしたい時はy．サーバ接続をして試したい時はnを入力する．

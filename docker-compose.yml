@@ -16,17 +16,3 @@ services:
       - "12345:12345"
     depends_on:
       - db
-  redis:
-    image: "redislabs/redisgraph:latest"
-    ports:
-      - "6379:6379"
-    volumes:
-      - "./redis_data:/data:rw"
-  insight:
-    image: "redislabs/redisinsight:latest"
-    depends_on:
-      - redis
-    volumes:
-      - "./redis_insight_db:/db:rw"
-    ports:
-      - "8001:8001"

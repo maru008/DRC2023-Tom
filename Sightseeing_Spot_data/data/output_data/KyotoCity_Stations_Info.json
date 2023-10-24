@@ -1,0 +1,1064 @@
+[
+    {
+        "Station_Code": "8126",
+        "Station_Name": "鞍馬口駅",
+        "latitude": 35.0377951,
+        "longitude": 135.7593097,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": "8124",
+        "Station_Name": "北山駅",
+        "latitude": 35.0513228,
+        "longitude": 135.7660054,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": "3061",
+        "Station_Name": "二条駅",
+        "latitude": 35.011103,
+        "longitude": 135.741777,
+        "lines": [
+            "JR_嵯峨野線",
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": "1714",
+        "Station_Name": "京都駅",
+        "latitude": 34.985849,
+        "longitude": 135.7587667,
+        "lines": [
+            "JR_京都線",
+            "JR_嵯峨野線",
+            "JR_奈良線",
+            "地下鉄_烏丸線",
+            "近鉄_京都線"
+        ]
+    },
+    {
+        "Station_Code": "8125",
+        "Station_Name": "北大路駅",
+        "latitude": 35.0451577,
+        "longitude": 135.7587559,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": "8128",
+        "Station_Name": "丸太町駅",
+        "latitude": 35.0165231,
+        "longitude": 135.7595241,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": "8127",
+        "Station_Name": "今出川駅",
+        "latitude": 35.0298223,
+        "longitude": 135.7593593,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": "8122",
+        "Station_Name": "国際会館駅",
+        "latitude": 35.06330519999999,
+        "longitude": 135.7852157,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": "8139",
+        "Station_Name": "蹴上駅",
+        "latitude": 35.0079783,
+        "longitude": 135.7904522,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": "15036",
+        "Station_Name": "神宮丸太町駅",
+        "latitude": 35.0180448,
+        "longitude": 135.7722485,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": "6343",
+        "Station_Name": "京都河原町駅",
+        "latitude": 35.0037565,
+        "longitude": 135.7687486,
+        "lines": [
+            "阪急_京都線"
+        ]
+    },
+    {
+        "Station_Code": "8138",
+        "Station_Name": "東山駅",
+        "latitude": 35.0094258,
+        "longitude": 135.7798758,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": "8136",
+        "Station_Name": "京都市役所前駅",
+        "latitude": 35.0109265,
+        "longitude": 135.7693484,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": "15038",
+        "Station_Name": "清水五条駅",
+        "latitude": 34.9959035,
+        "longitude": 135.7685681,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": "6275",
+        "Station_Name": "七条駅",
+        "latitude": 34.9898138,
+        "longitude": 135.7678712,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": "2134",
+        "Station_Name": "西大路駅",
+        "latitude": 34.9810435,
+        "longitude": 135.7323408,
+        "lines": [
+            "JR_京都線"
+        ]
+    },
+    {
+        "Station_Code": "20174",
+        "Station_Name": "梅小路京都西駅",
+        "latitude": 34.9889106,
+        "longitude": 135.7431391,
+        "lines": [
+            "JR_嵯峨野線"
+        ]
+    },
+    {
+        "Station_Code": "3060",
+        "Station_Name": "丹波口駅",
+        "latitude": 34.9955089,
+        "longitude": 135.742432,
+        "lines": [
+            "JR_嵯峨野線"
+        ]
+    },
+    {
+        "Station_Code": "5875",
+        "Station_Name": "東寺駅",
+        "latitude": 34.9799328,
+        "longitude": 135.7525327,
+        "lines": [
+            "近鉄_京都線"
+        ]
+    },
+    {
+        "Station_Code": "3063",
+        "Station_Name": "花園駅",
+        "latitude": 35.0186065,
+        "longitude": 135.7177017,
+        "lines": [
+            "JR_嵯峨野線"
+        ]
+    },
+    {
+        "Station_Code": "8118",
+        "Station_Name": "御室仁和寺駅",
+        "latitude": 35.0265261,
+        "longitude": 135.7138353,
+        "lines": [
+            "嵐電_北野線"
+        ]
+    },
+    {
+        "Station_Code": "6267",
+        "Station_Name": "中書島駅",
+        "latitude": 34.92689,
+        "longitude": 135.760362,
+        "lines": [
+            "京阪電車_京阪本線",
+            "京阪電車_宇治線"
+        ]
+    },
+    {
+        "Station_Code": "6272",
+        "Station_Name": "龍谷大前深草駅",
+        "latitude": 34.964437,
+        "longitude": 135.7700937,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": "5881",
+        "Station_Name": "桃山御陵前駅",
+        "latitude": 34.9333762,
+        "longitude": 135.765527,
+        "lines": [
+            "近鉄_京都線"
+        ]
+    },
+    {
+        "Station_Code": "6269",
+        "Station_Name": "丹波橋駅",
+        "latitude": 34.9387926,
+        "longitude": 135.7654423,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": "2349",
+        "Station_Name": "JR藤森駅",
+        "latitude": 34.9482862,
+        "longitude": 135.7757231,
+        "lines": [
+            "JR_奈良線"
+        ]
+    },
+    {
+        "Station_Code": "2348",
+        "Station_Name": "稲荷駅",
+        "latitude": 34.9668072,
+        "longitude": 135.7708496,
+        "lines": [
+            "JR_奈良線"
+        ]
+    },
+    {
+        "Station_Code": "6270",
+        "Station_Name": "墨染駅",
+        "latitude": 34.948388,
+        "longitude": 135.76911,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": "2350",
+        "Station_Name": "桃山駅",
+        "latitude": 34.9326465,
+        "longitude": 135.7711191,
+        "lines": [
+            "JR_奈良線"
+        ]
+    },
+    {
+        "Station_Code": "2133",
+        "Station_Name": "山科駅",
+        "latitude": 34.9923744,
+        "longitude": 135.817157,
+        "lines": [
+            "JR_京都線",
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": "8142",
+        "Station_Name": "小野駅",
+        "latitude": 34.9612032,
+        "longitude": 135.8126907,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": "6294",
+        "Station_Name": "御陵駅",
+        "latitude": 34.9960625,
+        "longitude": 135.8017627,
+        "lines": [
+            "京阪電車_京津線",
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": "6355",
+        "Station_Name": "松尾大社駅",
+        "latitude": 35.0005567,
+        "longitude": 135.6880583,
+        "lines": [
+            "阪急_嵐山線"
+        ]
+    },
+    {
+        "Station_Code": "6354",
+        "Station_Name": "上桂駅",
+        "latitude": 34.9905282,
+        "longitude": 135.6958487,
+        "lines": [
+            "阪急_嵐山線"
+        ]
+    },
+    {
+        "Station_Code": "6356",
+        "Station_Name": "嵐山駅",
+        "latitude": 35.0102337,
+        "longitude": 135.6817324,
+        "lines": [
+            "阪急_嵐山線",
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": "6338",
+        "Station_Name": "桂駅",
+        "latitude": 34.9794124,
+        "longitude": 135.7032554,
+        "lines": [
+            "阪急_京都線",
+            "阪急_嵐山線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "桂川駅",
+        "latitude": 34.9644975,
+        "longitude": 135.7103042,
+        "lines": [
+            "JR_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "円町駅",
+        "latitude": 35.018129,
+        "longitude": 135.730723,
+        "lines": [
+            "JR_嵯峨野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "太秦駅",
+        "latitude": 35.0170982,
+        "longitude": 135.7013287,
+        "lines": [
+            "JR_嵯峨野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "嵯峨嵐山駅",
+        "latitude": 35.018781,
+        "longitude": 135.6811811,
+        "lines": [
+            "JR_嵯峨野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "東福寺駅",
+        "latitude": 34.981384,
+        "longitude": 135.769581,
+        "lines": [
+            "JR_奈良線",
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "出町柳駅",
+        "latitude": 35.0304996,
+        "longitude": 135.7732283,
+        "lines": [
+            "京阪電車_京阪本線",
+            "叡山電車_叡山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "三条駅",
+        "latitude": 35.0094432,
+        "longitude": 135.7723025,
+        "lines": [
+            "京阪電車_京阪本線",
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "祇園四条駅",
+        "latitude": 35.0039708,
+        "longitude": 135.7720929,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "鳥羽街道駅",
+        "latitude": 34.9739368,
+        "longitude": 135.770049,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "伏見稲荷駅",
+        "latitude": 34.9687187,
+        "longitude": 135.7693455,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "藤森駅",
+        "latitude": 34.9568812,
+        "longitude": 135.7702771,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "伏見桃山駅",
+        "latitude": 34.93262199999999,
+        "longitude": 135.7643009,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "淀駅",
+        "latitude": 34.9064864,
+        "longitude": 135.721241,
+        "lines": [
+            "京阪電車_京阪本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "京阪山科駅",
+        "latitude": 34.991954,
+        "longitude": 135.8168698,
+        "lines": [
+            "京阪電車_京津線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "四宮駅",
+        "latitude": 34.9918011,
+        "longitude": 135.8241318,
+        "lines": [
+            "京阪電車_京津線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "観月橋駅",
+        "latitude": 34.9280959,
+        "longitude": 135.7684523,
+        "lines": [
+            "京阪電車_宇治線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "桃山南口駅",
+        "latitude": 34.931057,
+        "longitude": 135.783415,
+        "lines": [
+            "京阪電車_宇治線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "太秦天神川駅",
+        "latitude": 35.0108085,
+        "longitude": 135.7156461,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "西大路御池駅",
+        "latitude": 35.0109158,
+        "longitude": 135.7304825,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "二条城前駅",
+        "latitude": 35.0119082,
+        "longitude": 135.7504709,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "烏丸御池駅",
+        "latitude": 35.009992,
+        "longitude": 135.7596091,
+        "lines": [
+            "地下鉄_東西線",
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "東野駅",
+        "latitude": 34.9816264,
+        "longitude": 135.8165948,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "椥辻駅",
+        "latitude": 34.972664,
+        "longitude": 135.814856,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "醍醐駅",
+        "latitude": 34.95075,
+        "longitude": 135.810607,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "石田駅",
+        "latitude": 34.94039,
+        "longitude": 135.803802,
+        "lines": [
+            "地下鉄_東西線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "松ケ崎駅",
+        "latitude": 35.0516157,
+        "longitude": 135.7768281,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "四条駅",
+        "latitude": 35.0024081,
+        "longitude": 135.7597178,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "五条駅",
+        "latitude": 34.9954343,
+        "longitude": 135.7597179,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "九条駅",
+        "latitude": 34.9795635,
+        "longitude": 135.7597118,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "十条駅",
+        "latitude": 34.9725529,
+        "longitude": 135.7597043,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "くいな橋駅",
+        "latitude": 34.96267,
+        "longitude": 135.7575143,
+        "lines": [
+            "地下鉄_烏丸線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "竹田駅",
+        "latitude": 34.9569172,
+        "longitude": 135.7561098,
+        "lines": [
+            "地下鉄_烏丸線",
+            "近鉄_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "烏丸駅",
+        "latitude": 35.0036744,
+        "longitude": 135.7605895,
+        "lines": [
+            "阪急_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "大宮駅",
+        "latitude": 35.0036361,
+        "longitude": 135.7485451,
+        "lines": [
+            "阪急_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "西院駅",
+        "latitude": 35.0033317,
+        "longitude": 135.7316315,
+        "lines": [
+            "阪急_京都線",
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "西京極駅",
+        "latitude": 34.9922152,
+        "longitude": 135.7180023,
+        "lines": [
+            "阪急_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "洛西口駅",
+        "latitude": 34.9639439,
+        "longitude": 135.7031408,
+        "lines": [
+            "阪急_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "元田中駅",
+        "latitude": 35.0348555,
+        "longitude": 135.7809053,
+        "lines": [
+            "叡山電車_叡山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "茶山・京都芸術大学駅",
+        "latitude": 35.0382671,
+        "longitude": 135.7845226,
+        "lines": [
+            "叡山電車_叡山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "一乗寺駅",
+        "latitude": 35.0441224,
+        "longitude": 135.7874374,
+        "lines": [
+            "叡山電車_叡山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "修学院駅",
+        "latitude": 35.0502851,
+        "longitude": 135.7903833,
+        "lines": [
+            "叡山電車_叡山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "宝ケ池駅",
+        "latitude": 35.05816910000001,
+        "longitude": 135.7923413,
+        "lines": [
+            "叡山電車_叡山本線",
+            "叡山電車_鞍馬線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "三宅八幡駅",
+        "latitude": 35.062376,
+        "longitude": 135.79616,
+        "lines": [
+            "叡山電車_叡山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "八瀬比叡山口駅",
+        "latitude": 35.0651813,
+        "longitude": 135.808464,
+        "lines": [
+            "叡山電車_叡山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "八幡前駅",
+        "latitude": 35.066393,
+        "longitude": 135.7924057,
+        "lines": [
+            "叡山電車_鞍馬線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "岩倉駅",
+        "latitude": 35.0712764,
+        "longitude": 135.7866016,
+        "lines": [
+            "叡山電車_鞍馬線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "木野駅",
+        "latitude": 35.0711095,
+        "longitude": 135.7764155,
+        "lines": [
+            "叡山電車_鞍馬線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "京都精華大前駅",
+        "latitude": 35.0730758,
+        "longitude": 135.7688445,
+        "lines": [
+            "叡山電車_鞍馬線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "二軒茶屋駅",
+        "latitude": 35.077429,
+        "longitude": 135.766023,
+        "lines": [
+            "叡山電車_鞍馬線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "市原駅",
+        "latitude": 35.088122,
+        "longitude": 135.762995,
+        "lines": [
+            "叡山電車_鞍馬線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "二ノ瀬駅",
+        "latitude": 35.097835,
+        "longitude": 135.7631159,
+        "lines": [
+            "叡山電車_鞍馬線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "貴船口駅",
+        "latitude": 35.105953,
+        "longitude": 135.763661,
+        "lines": [
+            "叡山電車_鞍馬線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "鞍馬駅",
+        "latitude": 35.112925,
+        "longitude": 135.772521,
+        "lines": [
+            "叡山電車_鞍馬線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "十条駅（近鉄）",
+        "latitude": 34.9737821,
+        "longitude": 135.7524375,
+        "lines": [
+            "近鉄_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "上鳥羽口駅",
+        "latitude": 34.9654481,
+        "longitude": 135.7524341,
+        "lines": [
+            "近鉄_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "伏見駅",
+        "latitude": 34.9460572,
+        "longitude": 135.7613639,
+        "lines": [
+            "近鉄_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "近鉄丹波橋駅",
+        "latitude": 34.9384149,
+        "longitude": 135.7663899,
+        "lines": [
+            "近鉄_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "向島駅",
+        "latitude": 34.9150037,
+        "longitude": 135.7695376,
+        "lines": [
+            "近鉄_京都線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "嵐電嵯峨駅",
+        "latitude": 35.0164687,
+        "longitude": 135.6813695,
+        "lines": [
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "鹿王院駅",
+        "latitude": 35.0169616,
+        "longitude": 135.6856153,
+        "lines": [
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "車折神社駅",
+        "latitude": 35.0167122,
+        "longitude": 135.6891002,
+        "lines": [
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "有栖川駅",
+        "latitude": 35.0151664,
+        "longitude": 135.6947615,
+        "lines": [
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "帷子ノ辻駅",
+        "latitude": 35.0151901,
+        "longitude": 135.7001813,
+        "lines": [
+            "嵐電_嵐山本線",
+            "嵐電_北野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "太秦広隆寺駅",
+        "latitude": 35.0134921,
+        "longitude": 135.7082516,
+        "lines": [
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "蚕ノ社駅",
+        "latitude": 35.0119379,
+        "longitude": 135.7130504,
+        "lines": [
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "嵐電天神川駅",
+        "latitude": 35.0102131,
+        "longitude": 135.7151963,
+        "lines": [
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "山ノ内駅",
+        "latitude": 35.0083035,
+        "longitude": 135.72337,
+        "lines": [
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "西大路三条駅",
+        "latitude": 35.0079915,
+        "longitude": 135.7321394,
+        "lines": [
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "四条大宮駅",
+        "latitude": 35.0033444,
+        "longitude": 135.7486099,
+        "lines": [
+            "嵐電_嵐山本線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "北野白梅町駅",
+        "latitude": 35.0273504,
+        "longitude": 135.7308888,
+        "lines": [
+            "嵐電_北野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "等持院・立命館大学衣笠キャンパス前駅",
+        "latitude": 35.0278061,
+        "longitude": 135.7239889,
+        "lines": [
+            "嵐電_北野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "龍安寺駅",
+        "latitude": 35.0278456,
+        "longitude": 135.7211503,
+        "lines": [
+            "嵐電_北野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "妙心寺駅",
+        "latitude": 35.026378,
+        "longitude": 135.7181122,
+        "lines": [
+            "嵐電_北野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "宇多野駅",
+        "latitude": 35.0271896,
+        "longitude": 135.7096846,
+        "lines": [
+            "嵐電_北野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "鳴滝駅",
+        "latitude": 35.0235725,
+        "longitude": 135.70578,
+        "lines": [
+            "嵐電_北野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "常盤駅",
+        "latitude": 35.0206179,
+        "longitude": 135.7049427,
+        "lines": [
+            "嵐電_北野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "撮影所前駅",
+        "latitude": 35.0157355,
+        "longitude": 135.7027363,
+        "lines": [
+            "嵐電_北野線"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "トロッコ保津峡駅",
+        "latitude": 35.0258308,
+        "longitude": 135.6457381,
+        "lines": [
+            "嵯峨野トロッコ列車"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "トロッコ嵐山駅",
+        "latitude": 35.017128,
+        "longitude": 135.6702817,
+        "lines": [
+            "嵯峨野トロッコ列車"
+        ]
+    },
+    {
+        "Station_Code": null,
+        "Station_Name": "トロッコ嵯峨駅",
+        "latitude": 35.018568,
+        "longitude": 135.6807823,
+        "lines": [
+            "嵯峨野トロッコ列車"
+        ]
+    }
+]

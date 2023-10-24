@@ -107,8 +107,9 @@ user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
 
 user_input_ls = []
 system_output_text = []
-
 resulting_sight_id_mtx = []
+
+
 
 Dialog_turn_num = 0
 
@@ -185,25 +186,54 @@ while True:
         speech_gen.speech_generate(response_text)
         user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
         user_input_log.append({"role": "assistant", "content":response_text})
-        
-speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものか，そしてあなたがどんな人かわかりました！それではプランを作成します．少しお待ちください．")
+#最終的に得られるJSON定義
+
+
+
+    
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 
 #画面表示するものを送る
 # sightID_ls = [80026003,80026022,80025993,80025990] #これは一例
-print("select 4 spot")
-if len(resulting_sight_id_mtx) == 0:
+Select4_Bool = False
+print("select 4 spot...")
+sightID_ls = select4spot(resulting_sight_id_mtx)
+if sightID_ls is None:
     sightID_ls = [80026003,80026022,80025993,80025990] 
-    speech_gen.speech_generate("申し訳ありません．お客様に合致した観光地を見つけることができませんでした．今回は京都で代表的な観光地を上げさせていただきます．")
+    result_user_json ={}
 else:
-    if  len(resulting_sight_id_mtx[0])<4:
-        sightID_ls = [80026003,80026022,80025993,80025990]
-        speech_gen.speech_generate("申し訳ありません．お客様に合致した観光地を見つけることができませんでした．今回は京都で代表的な観光地を上げさせていただきます．")
-    else:
-        sightID_ls = select4spot(resulting_sight_id_mtx)
-print("選ばれたIDリスト：",sightID_ls)
+    result_user_json = data_as_json
+    Select4_Bool = True
+sightTitle_ls = [Sightseeing_mongodb.get_title_by_sight_id(sightID_i) for sightID_i in sightID_ls]
+print("選ばれた観光地リスト: ",sightTitle_ls)
+#この4つを選んだ基準を話す===================================================================================
+# 非同期処理関数定義========================================================================================
+def async_speach_json_result():
+    speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものか，そしてあなたがどんな人かわかりました！それではいくつか観光地を検索いたします．少しお待ちください．")
+    
+def async_generate_spot_reason(sightTitle_ls,user_json):
+    global spot_reason_text
+    SpotReason_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/Spot_reason.txt")
+    with open(SpotReason_prompt_path, 'r', encoding='utf-8') as f:
+        SpotReason_prompt_text = f.read()
+    input_text = str(sightTitle_ls) + "\n" + json.dumps(user_json)
+    spot_reason_text = RobotNLG.GPT4(input_text,SpotReason_prompt_text,[])
+#4つ選ばれていたら非同期処理開始
+if Select4_Bool:
+    thread1 = threading.Thread(target=async_speach_json_result, args=())
+    thread2 = threading.Thread(target=async_generate_spot_reason, args=(sightTitle_ls,result_user_json,))
+    thread1.start()
+    thread2.start()
+    thread1.join()
+    thread2.join()
+    #理由の発話
+    speech_gen.speech_generate(spot_reason_text)
+else:
+    speech_gen.speech_generate("申し訳ありません．お客様に合致した観光地を見つけることができませんでした．今回は京都で代表的な観光地を上げさせていただきます．")
+
+speech_gen.speech_generate("それでは，4つそれぞれについて説明させていただきます．")
 #画像表示サーバにデータを送る============================================================================
 view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
 sight_view.send_data(view_spot_json)
@@ -212,7 +242,6 @@ SpotIntro_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/Spot_intr
 with open(SpotIntro_prompt_path, 'r', encoding='utf-8') as f:
     SpotIntroGPT_prompt_text = f.read()
 # 非同期処理用の関数============================================================================
-
 def async_speach_view_monitor(head_text, title, results, index):
     speach_text = head_text  + title + "の写真と地図です．ご覧ください．"
     speech_gen.speech_generate(speach_text)
@@ -220,19 +249,17 @@ def async_speach_view_monitor(head_text, title, results, index):
 
 def async_intro_spot(spotdesc_text):
     global response_from_intro_spot
-    # response_text = RobotNLG.ChatGPT(spotdesc_text,SpotIntroGPT_prompt_text,[])
+    # response_text = RobotNLG.GPT4(spotdesc_text,SpotIntroGPT_prompt_text,[])
     response_text = "省略"
     response_from_intro_spot = response_text
     return response_text
 
 # 観光地の紹介を開始============================================================================
 head_text_ls = ["まず左上は，","次に右上は，","その左下は，","最後に右下は，"]
-sightTitle_ls = []
 # 結果を保存するためのリストを用意
 spoken_texts = [None] * len(sightID_ls)
 for i,sightID_i in enumerate(sightID_ls):
-    title_i = Sightseeing_mongodb.get_title_by_sight_id(sightID_i)
-    sightTitle_ls.append(title_i)
+    title_i = sightTitle_ls[i]
     #DBから説明文取得
     desc_i = Sightseeing_mongodb.get_summary_by_sight_id(sightID_i)
     
@@ -249,12 +276,13 @@ for i,sightID_i in enumerate(sightID_ls):
     speech_gen.speech_generate(response_from_intro_spot)
     time.sleep(1)
 now_screen_state = '\n'.join(spoken_texts)
+
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 speech_gen.speech_generate("これら４つの観光地から二つの観光地を選んでください，よろしくお願いします．")
 
-#二つの観光地を選ぶ段階
+#二つの観光地を選ぶ段階---------------------------------------------------------------------------------
 title_id_json = dict(zip(sightID_ls, sightTitle_ls))
 print(title_id_json)
 choice_two_spot_prompt = f'''

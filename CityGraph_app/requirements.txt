@@ -1,4 +1,0 @@
-redis
-googlemaps
-geopy
-redisgraph

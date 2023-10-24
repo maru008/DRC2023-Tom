@@ -20,25 +20,39 @@ def change_subject(now_json):
 
 
 def select4spot(data):
+    # 配列が空か、全ての要素が3つ以下の場合
+    if not data or sum(len(row) for row in data) < 4:
+        return None
 
-    # 最終的に選ばれる要素のリスト
     selected_elements = []
 
-    # 行が4つ以上あるかどうかをチェック
-    if len(data) >= 4:
-        # ランダムに4行を選ぶ
-        rows = random.sample(data, 4)
-    else:
-        # 4つ未満の場合は、全ての行を使用
-        rows = data * (4//len(data)) + random.sample(data, 4%len(data))
+    # 配列の行が2つ以上ある場合、それぞれの行から要素を選ぶ
+    if len(data) > 1:
+        for row in data:
+            if len(selected_elements) < 4:
+                selected_elements.append(random.choice(row))
+            else:
+                break
 
-    for row in rows:
-        while True:
-            # 各行からランダムに1つの要素を選ぶ
-            element = random.choice(row)
-            if element not in selected_elements:
-                # 同じ数値がない場合のみ、リストに追加する
-                selected_elements.append(element)
-                break  # 次の行に進む
+        # 選ばれた要素が4つに達していない場合、必要な数だけ追加で選ぶ
+        while len(selected_elements) < 4:
+            # 全ての行の要素を一つのリストに平坦化
+            flat_list = [item for sublist in data for item in sublist]
+            # 重複を避けるために、既に選択されている要素をリストから取り除く
+            for element in selected_elements:
+                if element in flat_list:
+                    flat_list.remove(element)
+
+            if flat_list:  # まだ選べる要素がある場合
+                selected_elements.append(random.choice(flat_list))
+            else:  # 選べる要素がない場合
+                return None
+
+    # 配列の行が1つしかない場合、その中から4つランダムに選ぶ
+    else:
+        if len(data[0]) >= 4:
+            selected_elements = random.sample(data[0], 4)
+        else:
+            return None
 
     return selected_elements
