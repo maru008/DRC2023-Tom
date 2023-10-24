@@ -245,13 +245,14 @@ else:
     speach_t = "申し訳ありません．お客様に合致した観光地を見つけることができませんでした．今回は京都で代表的な観光地を上げさせていただきます．"
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
+    view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
+    sight_view.send_data(view_spot_json)
     
 speach_t = "それでは，4つそれぞれについて説明させていただきます．"
 speech_gen.speech_generate(speach_t)
 system_output_text_ls.append(speach_t)
 #画像表示サーバにデータを送る============================================================================
-view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
-sight_view.send_data(view_spot_json)
+
 #  観光地紹介用GPT============================================================================
 SpotIntro_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/Spot_intro.txt")
 with open(SpotIntro_prompt_path, 'r', encoding='utf-8') as f:

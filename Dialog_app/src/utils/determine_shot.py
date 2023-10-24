@@ -25,34 +25,26 @@ def select4spot(data):
         return None
 
     selected_elements = []
+    flat_list = [item for sublist in data for item in sublist]
 
     # 配列の行が2つ以上ある場合、それぞれの行から要素を選ぶ
     if len(data) > 1:
         for row in data:
-            if len(selected_elements) < 4:
-                selected_elements.append(random.choice(row))
-            else:
-                break
+            unique_row = [item for item in row if item not in selected_elements]
+            if unique_row:  # 重複しない要素があれば
+                choice = random.choice(unique_row)
+                selected_elements.append(choice)
+                flat_list.remove(choice)  # 選択された要素をflat_listから除外
+            if len(selected_elements) == 4:  # 4つ選択できたら終了
+                return selected_elements
 
         # 選ばれた要素が4つに達していない場合、必要な数だけ追加で選ぶ
-        while len(selected_elements) < 4:
-            # 全ての行の要素を一つのリストに平坦化
-            flat_list = [item for sublist in data for item in sublist]
-            # 重複を避けるために、既に選択されている要素をリストから取り除く
-            for element in selected_elements:
-                if element in flat_list:
-                    flat_list.remove(element)
+        while len(selected_elements) < 4 and flat_list:
+            choice = random.choice(flat_list)
+            if choice not in selected_elements:  # 選択した要素が重複しないことを確認
+                selected_elements.append(choice)
+                flat_list.remove(choice)  # 選択された要素をflat_listから除外
 
-            if flat_list:  # まだ選べる要素がある場合
-                selected_elements.append(random.choice(flat_list))
-            else:  # 選べる要素がない場合
-                return None
-
-    # 配列の行が1つしかない場合、その中から4つランダムに選ぶ
-    else:
-        if len(data[0]) >= 4:
-            selected_elements = random.sample(data[0], 4)
-        else:
+            # 4つ選べたかどうかを確認
+        if len(selected_elements) < 4:
             return None
-
-    return selected_elements
