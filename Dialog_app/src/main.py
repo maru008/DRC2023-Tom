@@ -1,7 +1,7 @@
 # main.py
 import os
 import sys
-from datetime import datetime
+import datetime
 import time
 import json
 import threading
@@ -11,6 +11,7 @@ from utils.general_tool import SectionPrint, Create_dialog_log
 from utils.TCPserver import SocketConnection
 from utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import *
+from utils.judge_break import judge_roop_break
 
 from ServerModules.speech_generation import SpeechGeneration
 from ServerModules.voice_recognition import VoiceRecognition
@@ -96,23 +97,25 @@ def async_send_data(data):
 user_input_text_ls = []
 system_output_text_ls = []
 resulting_sight_id_mtx = []
-
+#最初の時間を記録
+start_time = datetime.datetime.now()
+#お辞儀
 motion_gen.play_motion("greeting_deep")
-speach_t = """こんにちは！旅行代理店ロボットのしょうこです．
-                           今回お客様は京都への旅行を考えていると聞きました．
-                           私との会話でお客様に最適な観光地を見つけるお手伝いをします！
-                           何か旅行で体験したいことなどを教えて下さい．
-                           よろしくお願いします．
-                           """
+speach_t = """こんにちは！旅行代理店ロボットのしょうこです．今回お客様は京都への旅行を考えていると聞きました．私との会話でお客様に最適な観光地を見つけるお手伝いをします！何か旅行で体験したいことなどを教えて下さい．よろしくお願いします．"""
 speech_gen.speech_generate(speach_t)
 system_output_text_ls.append(speach_t)
 user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
 
 #進行を記録
 Dialog_turn_num = 0
-
+already_serach_json = []
 while True:
-    Dialog_turn_num+=1
+    # 対話状態更新
+    Dialog_turn_num += 1
+    current_time = datetime.datetime.now()
+    #ブレークジャッジ(Judge_break_boolがtureならループを抜ける)
+    Judge_break_bool = judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_time)
+    
     # 発話認識
     motion_gen.play_motion("nod_slight")
     user_input_text = voice_recog.recognize()
@@ -164,42 +167,37 @@ while True:
     all_combinations = generate_combinations(data_as_json)
     
     for combination in all_combinations:
-        print("対象クエリ:",combination)
-        condition_json = json.dumps(combination)
-        sight_ids = Sightseeing_mongodb.get_sight_ids_by_multiple_conditions(condition_json)
-        print("結果観光地数:",len(sight_ids))
-        if len(sight_ids) > 2 and len(sight_ids) < 100:
-            resulting_sight_id_mtx.append(sight_ids)
-        print("-------------------------------")
+        if str(combination) not in already_serach_json:
+            condition_json = json.dumps(combination)
+            sight_ids = Sightseeing_mongodb.get_sight_ids_by_multiple_conditions(condition_json)
+            if len(sight_ids) > 2 and len(sight_ids) < 100:
+                print("対象クエリ:",combination)
+                print("結果観光地数:",len(sight_ids))
+                resulting_sight_id_mtx.append(sight_ids)
+            print("-------------------------------")
+            already_serach_json.append(str(combination))
     print(resulting_sight_id_mtx)
     #===================================================================================================
-    # 次のフェーズへ行く基準
-    diversityScore = 2
-    if len(resulting_sight_id_mtx) >= diversityScore:
+    # 次のフェーズへ行くかどうかの判定
+    if Judge_break_bool:
         break
-    if Dialog_turn_num > 7:
-        break
-    if Dialog_turn_num % 4 == 0 and len(resulting_sight_id_mtx) < 2:
-        response_text = change_subject(data_as_json)
-        speech_gen.speech_generate(response_text)
+    else:
+        # 話題変換をするかどうかの判定
+        # response_text = change_subject(data_as_json)
+        # speech_gen.speech_generate(response_text)
         user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
         user_input_log.append({"role": "assistant", "content":response_text})
-#最終的に得られるJSON定義
 
-
-
-    
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 
 #画面表示するものを送る
-# sightID_ls = [80026003,80026022,80025993,80025990] #これは一例
 Select4_Bool = False
 print("select 4 spot...")
 sightID_ls = select4spot(resulting_sight_id_mtx)
 if sightID_ls is None:
-    sightID_ls = [80026003,80026022,80025993,80025990] 
+    sightID_ls = [80026003,80026022,80025993,80025990] #得られなかったら仮の4つ選ぶ
     result_user_json ={}
 else:
     result_user_json = data_as_json
