@@ -203,8 +203,7 @@ while True:
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-
-#画面表示するものを送る
+# 配列から4つを選ぶ----------------------------------------------------------------------------------------
 Select4_Bool = False
 print("select 4 spot...")
 sightID_ls = select4spot(resulting_sight_id_mtx)
@@ -216,13 +215,26 @@ else:
     Select4_Bool = True
 sightTitle_ls = [Sightseeing_mongodb.get_title_by_sight_id(sightID_i) for sightID_i in sightID_ls]
 print("選ばれた観光地リスト: ",sightTitle_ls)
-#この4つを選んだ基準を話す===================================================================================
-# 非同期処理関数定義========================================================================================
-def async_speach_json_result():
+# 3つ非同期処理関数定義========================================================================================
+# ・thread1：たわいもない発話や画面表示 async_speach_json_result -> 発話したり，画面表示したり
+# ・thread2：推薦根拠の生成 async_generate_spot_reason -> spot_reason_textを作成
+# ・thread3：観光地説明の要約生成 async_generate_spot_desc -> spot_desc_text_lsを更新
+spot_desc_text_ls = []
+now_screen_state = []
+def async_speach_json_result(Select4_Bool,sightID_ls):
     speach_t ="ありがとうございます．今回の旅行がどういうものか，そしてあなたがどんな人かわかりました！それではいくつか観光地を検索いたします．少しお待ちください．"
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
-    
+    if not Select4_Bool:
+        speach_t = "申し訳ありません．お客様に合致した観光地を見つけることができませんでした．今回は京都で代表的な観光地を上げさせていただきます．"
+        speech_gen.speech_generate(speach_t)
+        system_output_text_ls.append(speach_t)
+    view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
+    sight_view.send_data(view_spot_json)
+    speach_t = "こちらの画面に，今回お客様に推薦する4つの観光地を表示しています．こらの4つから2つを選んでいただきます．"
+    speech_gen.speech_generate(speach_t)
+    system_output_text_ls.append(speach_t)
+# ----------------------------------------------------------------------------------------------
 def async_generate_spot_reason(sightTitle_ls,user_json):
     global spot_reason_text
     SpotReason_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/Spot_reason.txt")
@@ -230,69 +242,40 @@ def async_generate_spot_reason(sightTitle_ls,user_json):
         SpotReason_prompt_text = f.read()
     input_text = str(sightTitle_ls) + "\n" + json.dumps(user_json)
     spot_reason_text = RobotNLG.GPT4(input_text,SpotReason_prompt_text,[])
-#4つ選ばれていたら非同期処理開始
-if Select4_Bool:
-    thread1 = threading.Thread(target=async_speach_json_result, args=())
-    thread2 = threading.Thread(target=async_generate_spot_reason, args=(sightTitle_ls,result_user_json,))
-    thread1.start()
-    thread2.start()
-    thread1.join()
-    thread2.join()
-    #理由の発話
-    speech_gen.speech_generate(spot_reason_text)
-    system_output_text_ls.append(spot_reason_text)
-else:
-    speach_t = "申し訳ありません．お客様に合致した観光地を見つけることができませんでした．今回は京都で代表的な観光地を上げさせていただきます．"
-    speech_gen.speech_generate(speach_t)
-    system_output_text_ls.append(speach_t)
-    view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
-    sight_view.send_data(view_spot_json)
-    
-speach_t = "それでは，4つそれぞれについて説明させていただきます．"
-speech_gen.speech_generate(speach_t)
-system_output_text_ls.append(speach_t)
-#画像表示サーバにデータを送る============================================================================
-
-#  観光地紹介用GPT============================================================================
+# ----------------------------------------------------------------------------------------------
 SpotIntro_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/Spot_intro.txt")
 with open(SpotIntro_prompt_path, 'r', encoding='utf-8') as f:
     SpotIntroGPT_prompt_text = f.read()
-# 非同期処理用の関数============================================================================
-def async_speach_view_monitor(head_text, title, results, index):
-    speach_text = head_text  + title + "の写真と地図です．ご覧ください．"
-    speech_gen.speech_generate(speach_text)
-    system_output_text_ls.append(speach_text)
-    results[index] = speach_text
-
-def async_intro_spot(spotdesc_text):
-    global response_from_intro_spot
-    response_text = RobotNLG.GPT4(spotdesc_text,SpotIntroGPT_prompt_text,[])
-    # response_text = "省略"
-    response_from_intro_spot = response_text
-    return response_text
-
-# 観光地の紹介を開始============================================================================
-head_text_ls = ["まず左上は，","次に右上は，","その左下は，","最後に右下は，"]
-# 結果を保存するためのリストを用意
-spoken_texts = [None] * len(sightID_ls)
-for i,sightID_i in enumerate(sightID_ls):
-    title_i = sightTitle_ls[i]
-    #DBから説明文取得
-    desc_i = Sightseeing_mongodb.get_summary_by_sight_id(sightID_i)
+def async_generate_spot_desc(sightID_ls,sightTitle_ls):
+    global spot_desc_text_ls
+    head_text_ls = ["まず左上は，","次に右上は，","その左下は，","最後に右下は，"]
+    for i,sightID_i in enumerate(sightID_ls):
+        print(f"creating {sightID_i} desc")
+        viwe_spot_text = head_text_ls[i]  + sightTitle_ls[i] + "の写真と地図です．ご覧ください．"
+        spot_desc_text_ls.append(viwe_spot_text)
+        now_screen_state.append(viwe_spot_text)
+        desc_i = Sightseeing_mongodb.get_summary_by_sight_id(sightID_i)
+        spot_desc_text_ls.append(RobotNLG.GPT4(desc_i,SpotIntroGPT_prompt_text,[]))
     
-    thread1 = threading.Thread(target=async_speach_view_monitor, args=(head_text_ls[i], title_i, spoken_texts, i))
-    thread2 = threading.Thread(target=async_intro_spot, args=(desc_i,))
+thread1 = threading.Thread(target=async_speach_json_result, args=(Select4_Bool,sightID_ls))
+thread2 = threading.Thread(target=async_generate_spot_reason, args=(sightTitle_ls,result_user_json,))
+thread3 = threading.Thread(target=async_generate_spot_desc, args=(sightID_ls,sightTitle_ls))
+thread1.start()
+thread2.start()
+thread3.start()
 
-    # スレッドを開始
-    thread1.start()
-    thread2.start()
+thread1.join()
+thread2.join()
+#理由の発話
+speech_gen.speech_generate(spot_reason_text)
+system_output_text_ls.append(spot_reason_text)
 
-    # ここで、両方のスレッドが終了するのを待ちます
-    thread1.join()
-    thread2.join()
-    speech_gen.speech_generate(response_from_intro_spot)
-    time.sleep(1)
-now_screen_state = '\n'.join(spoken_texts)
+speach_t = "それでは，4つそれぞれについて説明させていただきます．"
+speech_gen.speech_generate(speach_t)
+system_output_text_ls.append(speach_t)
+for desc_i in spot_desc_text_ls:
+    speech_gen.speech_generate(desc_i)
+    system_output_text_ls.append(desc_i)
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
