@@ -7,7 +7,7 @@ import json
 import threading
 
 from utils.config_reader import read_config
-from utils.general_tool import SectionPrint, Create_dialog_log
+from utils.general_tool import SectionPrint
 from utils.TCPserver import SocketConnection
 from utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import change_subject,select4spot
@@ -116,7 +116,8 @@ while True:
     #ブレークジャッジ(Judge_break_boolがtureならループを抜ける)
     Judge_break_bool = judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_time)
     #話題変換ジャッジ(Judge_change_subject_boolがtureなら話題を変換する)
-    Judge_change_subject_bool = Judge_change_subject(Judge_break_bool,Dialog_turn_num)
+    Judge_change_subject_bool = Judge_change_subject(resulting_sight_id_mtx,Dialog_turn_num)
+    print(f"roop break judge:{Judge_change_subject_bool}, change subject judge:{Judge_change_subject_bool}")
     #可変プロンプト定義
     if Judge_break_bool or Judge_change_subject_bool: #この時は必ず会話を終える形にしないといけないので，聞き返さない．
         ChatGPT_prompt_text += "\nこの対話は相手が応答できる形で終えてください。つまり，話題を続ける質問を返すことです．"
@@ -138,9 +139,8 @@ while True:
         response_text = RobotNLG.GPT4(user_input_text,ChatGPT_prompt_text,user_input_log)
     else:
         response_text = user_input_text+"ってなんですか？"
-        
-    
-    if ADD_HESITATION:#いい淀みを付与
+
+    if ADD_HESITATION: #いい淀みを付与
         response_text = add_hesitation(response_text)
     #===================================================================================================
      # 非同期処理開始
@@ -152,16 +152,14 @@ while True:
     
     # 必要に応じて、後の処理で両方のスレッドが終了するのを待つ
     speech_thread.join()
-    send_data_thread.join()    
+    send_data_thread.join()
     
     ## ユーザとロボットのテキスト追加
     user_input_text_ls.append(user_input_text)
     system_output_text_ls.append(response_text)
     #===================================================================================================
-
     # LLM用の対話ログ追加
     user_input_log.append({"role": "assistant", "content":response_text})
-    
     #===================================================================================================
     # 現状のNLUの結果を出力
     Dialog_mongodb.print_collection_data(unique_id)
@@ -181,7 +179,7 @@ while True:
                 print("対象クエリ:",combination)
                 print("結果観光地数:",len(sight_ids))
                 resulting_sight_id_mtx.append(sight_ids)
-            print("-------------------------------")
+                print("-------------------------------")
             already_serach_json.append(str(combination))
     print(resulting_sight_id_mtx)
     #===================================================================================================
@@ -196,6 +194,11 @@ while True:
             #chatgptのログを初期化（最大トークン数エラーを回避するため）
             user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
             user_input_log.append({"role": "assistant", "content":response_text})
+    # 時間表示
+    elapsed_time_ms = int((current_time - start_time).total_seconds() * 1000)
+    minutes, remaining_ms = divmod(elapsed_time_ms, 60000)
+    seconds, milliseconds = divmod(remaining_ms, 1000)
+    print(f'Time> {minutes}:{seconds:02d}:{milliseconds:02d}')
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++

@@ -42,7 +42,7 @@ class VoiceRecognition:
                             if new_data:
                                 new_result = self._parse_data(new_data)  # 新しいデータを解析
                                 if new_result["type"] in ["final", "failed"] and new_result["user_utterance"] != "" and new_result["confidence"] >= confidence_threshold:
-                                    print("Additional input received: ", new_result["user_utterance"])
+                                    # print("Additional input received: ", new_result["user_utterance"])
                                     final_results.append(result["user_utterance"])
                                     result = new_result  # 更新された結果を保存
                                     start_time = time.time()  # タイマーをリセット
@@ -55,11 +55,11 @@ class VoiceRecognition:
             self.stop_listen()
             self.sock.close()
             User_res_text = ' '.join(final_results)
-            print("All User Text: ",User_res_text)
+            print("User> ",User_res_text)
             return User_res_text
 
         elif self.DIALOG_MODE == "console_dialog":
-            usr_input_text = str(input("User: "))
+            usr_input_text = str(input("User> "))
             return usr_input_text
     
     def _send_command(self, command):
