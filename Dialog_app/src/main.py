@@ -7,7 +7,7 @@ import json
 import threading
 
 from utils.config_reader import read_config
-from utils.general_tool import SectionPrint
+from utils.general_tool import SectionPrint, Create_dialog_log
 from utils.TCPserver import SocketConnection
 from utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import *
@@ -27,7 +27,9 @@ from database.mongodb_tools_Sightseeing import SightseeingDBHandler,generate_com
 
 USE_GPT_API = True
 ADD_HESITATION = False
-##引数情報を取得
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ 各種パラメタ設定準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
 config = read_config()
 IP = config.get("Server_Info","Server_ip")
 user_input_val = sys.argv[1]
@@ -39,7 +41,6 @@ elif user_input_val == "n":
     SectionPrint("ロボット対話モード")
 else:
     sys.exit('正しく入力してください')
-    
 #　システムチェックでAPIを使わないのためのコマンド
 console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
 if console_input == "n":
@@ -47,21 +48,17 @@ if console_input == "n":
 console_input = input("いい淀みを付与しますか？:(y/n)")
 if console_input == "y":
     ADD_HESITATION = True
-
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ データベース準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-
 print("Connecting to Database...")
 Dialog_mongodb = MongoDB('DRC2023_Dialog_DB') #クラス呼び出し
 unique_id = Dialog_mongodb.get_unique_collection_name() #コレクション名の取得
 Dialog_mongodb.insert_initial_data(unique_id) #初期データの追加
-
 #観光地MongoDBの用意
 if check_db_exists("Sightseeing_Spot_DB") == False:
     sys.exit("観光地データベースを用意してください")
 Sightseeing_mongodb = SightseeingDBHandler("Sightseeing_Spot_DB")
-
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ロボットサーバ準備 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -73,8 +70,7 @@ sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteVie
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-socket_conn = SocketConnection('localhost', 12345) 
-
+socket_conn = SocketConnection('localhost', 12345)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ フロントLLM準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -96,21 +92,23 @@ def async_send_data(data):
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 対話開始 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
+#  ユーザとシステムのログを記録
+user_input_text_ls = []
+system_output_text_ls = []
+resulting_sight_id_mtx = []
+
 motion_gen.play_motion("greeting_deep")
-speech_gen.speech_generate("""こんにちは！旅行代理店ロボットのしょうこです．
+speach_t = """こんにちは！旅行代理店ロボットのしょうこです．
                            今回お客様は京都への旅行を考えていると聞きました．
                            私との会話でお客様に最適な観光地を見つけるお手伝いをします！
                            何か旅行で体験したいことなどを教えて下さい．
                            よろしくお願いします．
-                           """)
+                           """
+speech_gen.speech_generate(speach_t)
+system_output_text_ls.append(speach_t)
 user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
 
-user_input_ls = []
-system_output_text = []
-resulting_sight_id_mtx = []
-
-
-
+#進行を記録
 Dialog_turn_num = 0
 
 while True:
@@ -147,8 +145,8 @@ while True:
     send_data_thread.join()    
     
     ## ユーザとロボットのテキスト追加
-    user_input_ls.append(user_input_text)
-    system_output_text.append(response_text)
+    user_input_text_ls.append(user_input_text)
+    system_output_text_ls.append(response_text)
     #===================================================================================================
 
     # LLM用の対話ログ追加
@@ -211,7 +209,9 @@ print("選ばれた観光地リスト: ",sightTitle_ls)
 #この4つを選んだ基準を話す===================================================================================
 # 非同期処理関数定義========================================================================================
 def async_speach_json_result():
-    speech_gen.speech_generate("ありがとうございます．今回の旅行がどういうものか，そしてあなたがどんな人かわかりました！それではいくつか観光地を検索いたします．少しお待ちください．")
+    speach_t ="ありがとうございます．今回の旅行がどういうものか，そしてあなたがどんな人かわかりました！それではいくつか観光地を検索いたします．少しお待ちください．"
+    speech_gen.speech_generate(speach_t)
+    system_output_text_ls.append(speach_t)
     
 def async_generate_spot_reason(sightTitle_ls,user_json):
     global spot_reason_text
@@ -230,10 +230,15 @@ if Select4_Bool:
     thread2.join()
     #理由の発話
     speech_gen.speech_generate(spot_reason_text)
+    system_output_text_ls.append(spot_reason_text)
 else:
-    speech_gen.speech_generate("申し訳ありません．お客様に合致した観光地を見つけることができませんでした．今回は京都で代表的な観光地を上げさせていただきます．")
-
-speech_gen.speech_generate("それでは，4つそれぞれについて説明させていただきます．")
+    speach_t = "申し訳ありません．お客様に合致した観光地を見つけることができませんでした．今回は京都で代表的な観光地を上げさせていただきます．"
+    speech_gen.speech_generate(speach_t)
+    system_output_text_ls.append(speach_t)
+    
+speach_t = "それでは，4つそれぞれについて説明させていただきます．"
+speech_gen.speech_generate(speach_t)
+system_output_text_ls.append(speach_t)
 #画像表示サーバにデータを送る============================================================================
 view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
 sight_view.send_data(view_spot_json)
@@ -245,6 +250,7 @@ with open(SpotIntro_prompt_path, 'r', encoding='utf-8') as f:
 def async_speach_view_monitor(head_text, title, results, index):
     speach_text = head_text  + title + "の写真と地図です．ご覧ください．"
     speech_gen.speech_generate(speach_text)
+    system_output_text_ls.append(speach_text)
     results[index] = speach_text
 
 def async_intro_spot(spotdesc_text):
@@ -298,6 +304,7 @@ choice_two_spot_prompt = f'''
 '''
 while True:
     user_input_text = voice_recog.recognize()
+    user_input_text_ls.append(user_input_text)
     response_text = RobotNLG.GPT4(user_input_text,choice_two_spot_prompt,[])
     trg2spotid = eval(response_text)
     print("得られたIDのリスト：",trg2spotid)
@@ -305,15 +312,22 @@ while True:
         break
     elif len(trg2spotid) <= 1:
         speach_text = "すみません,2つを選んでください．もう一度お願いします．"
-        speech_gen.speech_generate(speach_text)
+        
     elif len(trg2spotid) > 2:
         speach_text = "すみません,2つに絞ってください．もう一度お願いします．"
-        speech_gen.speech_generate(speach_text)
+        
     else:
         speach_text = "すみません,理解できませんでした．もう一度お願いします．"
-        speech_gen.speech_generate(speach_text)
-        
+    speech_gen.speech_generate(speach_text)
+    system_output_text_ls.append(speach_text)
+
 trg2spotTitle = [Sightseeing_mongodb.get_title_by_sight_id(sightID_i) for sightID_i in trg2spotid]
+
+#行き先の追加
+User_going_spot = {
+    "User_going_spot":trg2spotTitle
+}
+Dialog_mongodb.update_data(unique_id,User_going_spot)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 経路作成 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -324,9 +338,13 @@ with open(route_search_prompt_path, 'r', encoding='utf-8') as f:
     routeInfo_prompt_text = f.read()
 
 def async_speach_spot(trg2spotid,trg2spotTitle):
-    speech_gen.speech_generate(f"ありがとうございます．お客様が行きたいスポットは{trg2spotTitle[0]}と{trg2spotTitle[1]}ですね．")
+    speach_t = f"ありがとうございます．お客様が行きたいスポットは{trg2spotTitle[0]}と{trg2spotTitle[1]}ですね．"
+    speech_gen.speech_generate(speach_t)
+    system_output_text_ls.append(speach_t)
     sight_view.send_data(Sightseeing_mongodb.create_send_json(trg2spotid))
-    speech_gen.speech_generate("それではこの店から出発し，いちにちで巡り帰ってくるプランを検索いたします．少しお待ちください．")
+    speach_t = "それではこの店から出発し，いちにちで巡り帰ってくるプランを検索いたします．少しお待ちください．"
+    speech_gen.speech_generate(speach_t)
+    system_output_text_ls.append(speach_t)
 
 def async_search_route(trg2spotid):
     global route_desc_text
@@ -343,9 +361,9 @@ def async_search_route(trg2spotid):
     }
     response_text = RobotNLG.GPT4(str(route_info_json),routeInfo_prompt_text,[])
     route_desc_text = response_text
-    
+
 #並列処理--------------------------------------------------------------------------------------------
-print("start multi-thread processing (speach and serach route)")
+print("-------------start multi-thread processing (speach and serach route)-------------")
 thread1 = threading.Thread(target=async_speach_spot, args=(trg2spotid,trg2spotTitle))
 thread2 = threading.Thread(target=async_search_route, args=(trg2spotid,))
 # スレッドを開始
@@ -355,27 +373,83 @@ thread2.start()
 thread1.join()
 thread2.join()
 speech_gen.speech_generate(route_desc_text)
+system_output_text_ls.append(route_desc_text)
+
+
+## 対話ログを追加--------------------------------------------------------------------------------------------
+user_text_json = {
+    "User_text":user_input_text_ls
+}
+system_text_json = {
+    "System_text":system_output_text_ls
+}
+Dialog_mongodb.update_data(unique_id,user_text_json)
+Dialog_mongodb.update_data(unique_id,system_text_json)
+#===================================================================================================
+# +++++++++++++++++++++++++++++++ LangChainとの対話 ++++++++++++++++++++++++++++++++++++++++++++++++++
+#===================================================================================================
+speech_gen.speech_generate("以上が今回おすすめする観光プランになります．何か質問あれば何でも聞いてください！")
+
+
+from langchain.document_loaders import MongodbLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.memory import ConversationSummaryMemory
+from langchain.schema.document import Document
+
+OPEN_API_KEY = config.get("API_Key","OpenAI")
+
+loader = MongodbLoader(
+    connection_string='mongodb://localhost:27017/',
+    db_name='DRC2023_Dialog_DB',
+    collection_name=unique_id
+)
+
+# Document インスタンスを作成
+documents = loader.load()
+# text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=0)
+# all_splits = text_splitter.split_documents(documents)
+# print(all_splits)
+embeddings = OpenAIEmbeddings(openai_api_key=OPEN_API_KEY)
+vectorstore = Chroma.from_documents(documents=documents, embedding=embeddings)
+
+from langchain.chat_models import ChatOpenAI
+from langchain.chains import ConversationalRetrievalChain
+
+# Langchain_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/LangChain_prompt.txt")
+# with open(Langchain_prompt_path, 'r', encoding='utf-8') as f:
+#     # ファイルの内容を読み込む
+#     Langchain_prompt_text = f.read()
+
+
+llm = ChatOpenAI(openai_api_key=OPEN_API_KEY,model="gpt-4")
+retriever = vectorstore.as_retriever()
+memory = ConversationSummaryMemory(llm=llm,memory_key="chat_history",return_messages=True)
+qa = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memory=memory)
+
+i = 0
+while True:
+    user_input_text = voice_recog.recognize()
+    
+    systyem_output_text = qa(user_input_text)["answer"]
+    speech_gen.speech_generate(systyem_output_text)
+    
+    if i >= 3:
+        break
+    i += 1
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 終わりの挨拶 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-
+motion_gen.play_motion("greeting_deep")
 speech_gen.speech_generate("以上で案内を終了します．ありがとうございました．")
+
+
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 会話終了後の処理 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 
-
-##  対話ログを追加
-user_text_json = {
-    "User_text":user_input_ls
-}
-system_text_json = {
-    "System_text":system_output_text
-}
-
-Dialog_mongodb.update_data(unique_id,user_text_json)
-Dialog_mongodb.update_data(unique_id,system_text_json)
 
 SectionPrint("NLU結果出力")
 # # 会話の終了後、作成されたMongoDBのデータを出力

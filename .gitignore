@@ -14,7 +14,8 @@ CityGraph_app/data/output_data/value_count_GenreInfo.csv
 CityGraph_app/data/output_data/value_count_SightOptionList.csv
 CityGraph_app/data/preparation_data/RURUBU_GenreInfo.json
 CityGraph_app/data/output_data/NLU_Label_data.json
-
+#テストファイル
+Dialog_app/src/test_*.py
 
 #以降pythonデフォルト==============================
 # Byte-compiled / optimized / DLL files

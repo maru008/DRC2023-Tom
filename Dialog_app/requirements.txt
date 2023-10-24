@@ -4,3 +4,4 @@ tabulate
 pandas
 sudachipy
 sudachidict_core
+motor

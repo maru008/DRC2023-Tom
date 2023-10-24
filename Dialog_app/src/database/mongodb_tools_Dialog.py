@@ -74,31 +74,16 @@ class MongoDB:
         existing_data = collection.find_one()
         
         # 新しいJSONデータを既存のデータと結合
-        for key in json_data:
-            # もし新しいデータが空でないなら、それを追加
-            if json_data[key] and isinstance(json_data[key], list) and json_data[key][0]:
-                new_value = json_data[key][0].strip()  # 前後の空白を取り除く
-                if not new_value:  # 新しいデータが空白の場合、スキップ
-                    continue
-
-                # 既存のデータが空の場合
-                if not existing_data.get(key):
-                    existing_data[key] = [new_value]  # リストとして新しいデータをセット
-                # 既存のデータが空でない場合、かつ新しいデータが既存のリストに存在しない場合
-                elif new_value not in existing_data[key]:
-                    if isinstance(existing_data[key], list):
-                        existing_data[key].append(new_value)
-                    else:
-                        existing_data[key] = [existing_data[key], new_value]
-
-        # ここで、空白のリスト [''] を削除する
-        for key, value in existing_data.items():
-            if value == ['']:
-                del existing_data[key]
-
-        # データを更新
-        collection.update_one({}, {'$set': existing_data})
-    
+        for key, new_values in json_data.items():
+            if key in existing_data:
+                # 重複や空白のエントリを削除するためにセットを使用
+                merged_values = list(set(existing_data[key] + new_values))
+                merged_values = [value for value in merged_values if value]  # 空白のエントリを削除
+                existing_data[key] = merged_values
+            else:
+                existing_data[key] = new_values
+        collection.replace_one({'_id': existing_data['_id']}, existing_data)
+        
     def fetch_data_by_id(self, collection_name):
         """
         指定したコレクション名に基づいてデータを取得します。
@@ -140,7 +125,6 @@ class MongoDB:
         # tabulate を使用してデータを表形式で出力
         headers = ["key", "value"]
         print(tabulate(table_data, headers=headers, tablefmt='grid'))
-
 
 def check_db_exists(db_name):
     client = MongoClient('mongodb://localhost:27017/')
