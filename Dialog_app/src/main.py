@@ -136,7 +136,7 @@ while True:
     
     # GPTを使うかどうか
     if USE_GPT_API:
-        response_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
+        response_text = RobotNLG.GPT4(user_input_text,ChatGPT_prompt_text,user_input_log)
     else:
         response_text = user_input_text+"ってなんですか？"
 
@@ -280,7 +280,7 @@ for desc_i in spot_desc_text_ls:
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-speech_gen.speech_generate("これら４つの観光地から二つの観光地を選んでください，よろしくお願いします．")
+speech_gen.speech_generate("これら４つの観光地から２つの観光地を選んでください，よろしくお願いします．")
 
 #二つの観光地を選ぶ段階---------------------------------------------------------------------------------
 title_id_json = dict(zip(sightID_ls, sightTitle_ls))
