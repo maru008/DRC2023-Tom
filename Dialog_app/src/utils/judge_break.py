@@ -21,3 +21,14 @@ def judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_t
         return True
     
     return False 
+
+def Judge_change_subject(resulting_sight_id_mtx,Dialog_turn_num):
+    """
+    話題変換するかどうかの判定処理
+    出力
+    ・True or False (Trueなら話題変換をする)
+    """
+    # 対話ターンが4の倍数の時で，resulting_sight_id_mtxがまだ１件しか取れてない場合
+    if Dialog_turn_num %4 == 0 and len(resulting_sight_id_mtx) <= 1:
+        return True
+    return False

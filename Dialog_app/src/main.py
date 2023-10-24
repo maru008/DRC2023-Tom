@@ -10,8 +10,8 @@ from utils.config_reader import read_config
 from utils.general_tool import SectionPrint, Create_dialog_log
 from utils.TCPserver import SocketConnection
 from utils.NAVITIME_Route_serach import NAVITME
-from utils.determine_shot import *
-from utils.judge_break import judge_roop_break
+from utils.determine_shot import change_subject,select4spot
+from utils.judge_break import judge_roop_break,Judge_change_subject
 
 from ServerModules.speech_generation import SpeechGeneration
 from ServerModules.voice_recognition import VoiceRecognition
@@ -115,7 +115,13 @@ while True:
     current_time = datetime.datetime.now()
     #ブレークジャッジ(Judge_break_boolがtureならループを抜ける)
     Judge_break_bool = judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_time)
-    
+    #話題変換ジャッジ(Judge_change_subject_boolがtureなら話題を変換する)
+    Judge_change_subject_bool = Judge_change_subject(Judge_break_bool,Dialog_turn_num)
+    #可変プロンプト定義
+    if Judge_break_bool or Judge_change_subject_bool: #この時は必ず会話を終える形にしないといけないので，聞き返さない．
+        ChatGPT_prompt_text += "\nこの対話は相手が応答できる形で終えてください。つまり，話題を続ける質問を返すことです．"
+    else:
+        ChatGPT_prompt_text += "\nこの対話は相手が応答できない形で終えてください。つまり，話題を終える会話をすることです．"
     # 発話認識
     motion_gen.play_motion("nod_slight")
     user_input_text = voice_recog.recognize()
@@ -133,10 +139,11 @@ while True:
     else:
         response_text = user_input_text+"ってなんですか？"
         
-    #===================================================================================================
-    # 非同期処理開始
+    
     if ADD_HESITATION:#いい淀みを付与
         response_text = add_hesitation(response_text)
+    #===================================================================================================
+     # 非同期処理開始
     speech_thread = threading.Thread(target=async_speech_generate, args=(response_text,))#発話指示
     send_data_thread = threading.Thread(target=async_send_data, args=(str([unique_id, user_input_text]),))#NLUサーバに文字列を送る（DBへの追加は向こう側）
     
@@ -183,10 +190,12 @@ while True:
         break
     else:
         # 話題変換をするかどうかの判定
-        # response_text = change_subject(data_as_json)
-        # speech_gen.speech_generate(response_text)
-        user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
-        user_input_log.append({"role": "assistant", "content":response_text})
+        if Judge_change_subject_bool:
+            response_text = change_subject(data_as_json)
+            speech_gen.speech_generate(response_text)
+            #chatgptのログを初期化（最大トークン数エラーを回避するため）
+            user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
+            user_input_log.append({"role": "assistant", "content":response_text})
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++
