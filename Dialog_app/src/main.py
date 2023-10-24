@@ -136,7 +136,7 @@ while True:
     
     # GPTを使うかどうか
     if USE_GPT_API:
-        response_text = RobotNLG.GPT4(user_input_text,ChatGPT_prompt_text,user_input_log)
+        response_text = RobotNLG.ChatGPT(user_input_text,ChatGPT_prompt_text,user_input_log)
     else:
         response_text = user_input_text+"ってなんですか？"
 
@@ -172,7 +172,6 @@ while True:
     all_combinations = generate_combinations(data_as_json)
     
     for combination in all_combinations:
-        print(combination)
         if str(combination) not in already_serach_json:
             condition_json = json.dumps(combination)
             sight_ids = Sightseeing_mongodb.get_sight_ids_by_multiple_conditions(condition_json)
@@ -266,8 +265,8 @@ def async_speach_view_monitor(head_text, title, results, index):
 
 def async_intro_spot(spotdesc_text):
     global response_from_intro_spot
-    # response_text = RobotNLG.GPT4(spotdesc_text,SpotIntroGPT_prompt_text,[])
-    response_text = "省略"
+    response_text = RobotNLG.GPT4(spotdesc_text,SpotIntroGPT_prompt_text,[])
+    # response_text = "省略"
     response_from_intro_spot = response_text
     return response_text
 

@@ -26,13 +26,13 @@ class VoiceRecognition:
                     continue
                 
                 result = self._parse_data(received_data)
-                print(result)
+                # print(result)
                 if result["type"] in ["final", "failed"] and result["user_utterance"] != "" and result["confidence"] >= confidence_threshold:
-                    print("User: ", result["user_utterance"])
+                    # print("User: ", result["user_utterance"])
                     final_results.append(result["user_utterance"])
                     start_time = time.time()  # 現在の時間を記録
                     while True:
-                        if time.time() - start_time > 2:  # n秒以上経過したか確認
+                        if time.time() - start_time > 1:  # n秒以上経過したか確認
                             break  # 2秒以上経っていれば、whileループを抜ける
 
                         # 新しいデータがあるかどうかを確認する

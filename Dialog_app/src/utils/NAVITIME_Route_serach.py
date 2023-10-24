@@ -39,7 +39,7 @@ class NAVITME:
         self.long_spot1 = str(long_spot1)
         self.lat_spot2 = str(lat_spot2)
         self.Long_spot2 = str(Long_spot2)
-    def request_NAVITIME(self,transport_way):
+    def request_NAVITIME(self):
         
         url = "https://navitime-route-totalnavi.p.rapidapi.com/route_transit"
         querystring = {
