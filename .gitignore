@@ -4,6 +4,7 @@ config.ini
 # Dockerに依存するデータベース関連ファイル
 MongoDB/
 CityGraph_app/
+OSRM_server/data/
 #APIなどから取れるデータ
 Sightseeing_Spot_data/data/output_data/RURUBU_results_KyotoCity.json
 Sightseeing_Spot_data/data/output_data/KyotoCity_Stations_Info.json
