@@ -16,3 +16,10 @@ services:
       - "12345:12345"
     depends_on:
       - db
+
+  osrm_server_app:
+    image: osrm/osrm-backend
+    volumes:
+      - ./OSRM_server:/data
+    ports:
+      - "5000:5000"
