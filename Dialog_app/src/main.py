@@ -51,7 +51,6 @@ else:
 # console_input = input("いい淀みを付与しますか？:(y/n)")
 # if console_input == "y":
 #     ADD_HESITATION = True
-"mainマージの例"
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ データベース準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -105,12 +104,10 @@ resulting_sight_id_mtx = []
 #TCP開始サーバ接続------------------------------------------------------------------------------------
 #最初の時間を記録
 
-TCP_server.connect()
-print("send start command ...")
+print("Send start command ...")
 TCP_server.connect_and_request_rule()
 print("Conversation start signal waiting ...")
-if TCP_server.check_start_signal():
-    pass
+TCP_server.check_start_signal()
 TCP_server.close()
 print("Conversation started!")
 SectionPrint("対話開始")
