@@ -8,7 +8,7 @@ import threading
 from utils.config_reader import read_config
 from utils.general_tool import SectionPrint,check_time_exceeded
 from utils.TCPserver import SocketConnection
-from utils.NAVITIME_Route_serach import NAVITME
+from Dialog_app.src.utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import change_subject,select4spot
 from utils.judge_break import Judge_roop_break,Judge_change_subject
 
@@ -331,43 +331,42 @@ with open(route_search_prompt_path, 'r', encoding='utf-8') as f:
     # ファイルの内容を読み込む
     routeInfo_prompt_text = f.read()
 
-def async_speach_spot(trg2spotid,trg2spotTitle):
+def async_speach_spot(trg2spotTitle):
     speach_t = f"ありがとうございます．お客様が行きたいスポットは{trg2spotTitle[0]}と{trg2spotTitle[1]}ですね．"
     speech_gen.speech_generate(speach_t)
-    system_output_text_ls.append(speach_t)
-    sight_view.send_data(Sightseeing_mongodb.create_send_json(trg2spotid))
     speach_t = "それではこの店から出発し，公共交通機関で観光地を巡り，帰ってくるプランを検索いたします．少しお待ちください．"
     speech_gen.speech_generate(speach_t)
-    system_output_text_ls.append(speach_t)
 
-def async_search_route(trg2spotTitle,start_point,end_point):
-    global route_desc_text
+def async_search_route():
     global journey_ls
     journey_ls = NAVITME_serach.get_route_text(0)#この0は候補の番目
-
-    route_info_json = {
-        "start_end_spot":[start_point,end_point],
-        "via_spot":trg2spotTitle,
-        "route_desc":journey_ls,
-    }
-    response_text = RobotNLG.GPT4(str(route_info_json),routeInfo_prompt_text,[])
-    route_desc_text = response_text
+    print("NAVITIME> Serach route done!")
 
 #並列処理--------------------------------------------------------------------------------------------
 start_point, end_point = "JTBユニモール名古屋", "JTBユニモール名古屋"
 print("-------------start multi-thread processing (speach and serach route)-------------")
-thread1 = threading.Thread(target=async_speach_spot, args=(trg2spotid,trg2spotTitle))
-thread2 = threading.Thread(target=async_search_route, args=(trg2spotTitle,start_point, end_point))
+thread1 = threading.Thread(target=async_speach_spot, args=(trg2spotTitle,))
+thread2 = threading.Thread(target=async_search_route, args=())
 # スレッドを開始
 thread1.start()
 thread2.start()
 # ここで、両方のスレッドが終了するのを待ちます
 thread1.join()
 thread2.join()
-check_time_exceeded(start_time)
-speech_gen.speech_generate(route_desc_text)
-system_output_text_ls.append(route_desc_text)
 
+route_info_json = {
+        "start_end_spot":[start_point,end_point],
+        "via_spot":trg2spotTitle,
+        "route_desc":journey_ls,
+}
+past_messages = []
+
+speach_t = ""
+for talk in RobotNLG.yield_GPT4_message(str(route_info_json),routeInfo_prompt_text,past_messages=past_messages):
+    speach_t += talk
+    if "。" in speach_t:
+      speech_gen.speech_generate(speach_t)
+      speach_t = ""
 
 ## 対話ログを追加--------------------------------------------------------------------------------------------
 user_text_json = {
@@ -392,7 +391,6 @@ reco_after_prompt = f"""
     {journey_ls}
     これらの情報をもとに，今からお客様からの質疑応答があるので適切に回答し，接客を行ってください．
     文章は1文程度で簡潔に答え，相手が応答できない形で終えてください。つまり，話題を終える会話をすることです．
-    
 """
 
 user_input_log_after_recommend = [{"role": "system", "content":reco_after_prompt}]
