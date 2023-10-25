@@ -12,10 +12,10 @@ if [ -f "../.venv/bin/activate" ]; then
   source ../.venv/bin/activate
 
   # ユーザーに対話モードを問い合わせ
-  read -p "コマンド対話モードを実行しますか (y/n)? " interactive_mode
+  # read -p "コマンド対話モードを実行しますか (y/n)? " interactive_mode
 
   # Pythonスクリプトを実行
-  python src/main.py $interactive_mode
+  python src/main.py n
 
   # virtualenvをデアクティベート
   deactivate

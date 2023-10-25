@@ -43,12 +43,13 @@ elif user_input_val == "n":
 else:
     sys.exit('正しく入力してください')
 #　システムチェックでAPIを使わないのためのコマンド
-console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
-if console_input == "n":
-    USE_GPT_API = False
-console_input = input("いい淀みを付与しますか？:(y/n)")
-if console_input == "y":
-    ADD_HESITATION = True
+# console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
+# console_input = "y"
+# if console_input == "n":
+#     USE_GPT_API = False
+# console_input = input("いい淀みを付与しますか？:(y/n)")
+# if console_input == "y":
+#     ADD_HESITATION = True
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ データベース準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
