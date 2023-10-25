@@ -11,7 +11,7 @@ import threading
 from utils.config_reader import read_config
 from utils.general_tool import SectionPrint,check_time_exceeded
 from utils.TCPserver import SocketConnection
-from utils.NAVITIME_Route_serach import NAVITME
+from Dialog_app.src.utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import change_subject,select4spot
 from utils.judge_break import Judge_roop_break,Judge_change_subject
 
@@ -469,7 +469,6 @@ speech_thread.start()
 
 stop_generation = False
 async_speech_generate()
-# yield_speech_message(RobotNLG.yield_GPT4_message, str(route_info_json), routeInfo_prompt_text, past_messages)
 
 ## 対話ログを追加--------------------------------------------------------------------------------------------
 # user_text_json = {
