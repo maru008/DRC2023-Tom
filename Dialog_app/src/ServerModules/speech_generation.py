@@ -1,11 +1,19 @@
+import sys
+import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+dialog_modules_dir = os.path.join(current_dir, '..', 'DialogModules')
+sys.path.append(dialog_modules_dir)
+
 import socket
 import json
-import time
 import traceback
+from DialogModules.Add_Hesitation import add_hesitation
 
 class SpeechGeneration:
-    def __init__(self, DIALOG_MODE, ip, port):
+    def __init__(self, DIALOG_MODE,ADD_HESITATION, ip, port):
         self.DIALOG_MODE = DIALOG_MODE
+        self.ADD_HESITATION = ADD_HESITATION
         self.ip = ip
         self.port = int(port)
 
@@ -16,6 +24,10 @@ class SpeechGeneration:
     def speech_generate(self, text):
         print("System> ",text)
         if self.DIALOG_MODE == "robot_dialog":
+            if self.ADD_HESITATION:
+                #いい淀み付与コードの実行
+                text = add_hesitation(text)
+                
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
                 self.sock.connect((self.ip, self.port))

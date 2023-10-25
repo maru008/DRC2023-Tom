@@ -15,6 +15,7 @@ Sightseeing_Spot_data/data/preparation_data/RURUBU_GenreInfo.json
 Sightseeing_Spot_data/data/output_data/NLU_Label_data.json
 #テストファイル
 Dialog_app/src/System_tests/
+Dialog_app/src/test_*.py
 
 #以降pythonデフォルト==============================
 # Byte-compiled / optimized / DLL files

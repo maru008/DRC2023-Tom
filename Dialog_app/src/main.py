@@ -2,16 +2,15 @@
 import os
 import sys
 import datetime
-import time
 import json
 import threading
 
 from utils.config_reader import read_config
-from utils.general_tool import SectionPrint,elapsed_time
+from utils.general_tool import SectionPrint,check_time_exceeded
 from utils.TCPserver import SocketConnection
 from utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import change_subject,select4spot
-from utils.judge_break import judge_roop_break,Judge_change_subject
+from utils.judge_break import Judge_roop_break,Judge_change_subject
 
 from ServerModules.speech_generation import SpeechGeneration
 from ServerModules.voice_recognition import VoiceRecognition
@@ -20,7 +19,6 @@ from ServerModules.motion_generation import MotionGeneration
 from ServerModules.sight_view import SightViewTCPServer
 
 from DialogModules.NLGModule import NLG 
-from DialogModules.Add_Hesitation import add_hesitation
 
 from database.mongodb_tools_Dialog import MongoDB,check_db_exists
 from database.mongodb_tools_Sightseeing import SightseeingDBHandler,generate_combinations
@@ -63,7 +61,7 @@ Sightseeing_mongodb = SightseeingDBHandler("Sightseeing_Spot_DB")
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ロボットサーバ準備 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-speech_gen = SpeechGeneration(DIALOG_MODE,IP,config.get("Server_Info","SpeechGenerator_port"))
+speech_gen = SpeechGeneration(DIALOG_MODE,ADD_HESITATION,IP,config.get("Server_Info","SpeechGenerator_port"))
 voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"))
 face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
@@ -114,7 +112,7 @@ while True:
     Dialog_turn_num += 1
     current_time = datetime.datetime.now()
     #ブレークジャッジ(Judge_break_boolがtureならループを抜ける)
-    Judge_break_bool = judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_time)
+    Judge_break_bool = Judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_time)
     #話題変換ジャッジ(Judge_change_subject_boolがtureなら話題を変換する)
     Judge_change_subject_bool = Judge_change_subject(resulting_sight_id_mtx,Dialog_turn_num)
     print(f"roop break judge:{Judge_change_subject_bool}, change subject judge:{Judge_change_subject_bool}")
@@ -139,9 +137,6 @@ while True:
         response_text = RobotNLG.GPT4(user_input_text,ChatGPT_prompt_text,user_input_log)
     else:
         response_text = user_input_text+"ってなんですか？"
-
-    if ADD_HESITATION: #いい淀みを付与
-        response_text = add_hesitation(response_text)
     #===================================================================================================
      # 非同期処理開始
     speech_thread = threading.Thread(target=async_speech_generate, args=(response_text,))#発話指示
@@ -195,10 +190,7 @@ while True:
             user_input_log = [{"role": "system", "content":ChatGPT_prompt_text}]
             user_input_log.append({"role": "assistant", "content":response_text})
     # 時間表示
-    elapsed_time_ms = elapsed_time(start_time)
-    minutes, remaining_ms = divmod(elapsed_time_ms, 60000)
-    seconds, milliseconds = divmod(remaining_ms, 1000)
-    print(f'Time> {minutes}:{seconds:02d}:{milliseconds:02d}')
+    check_time_exceeded(start_time)
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++
@@ -256,7 +248,8 @@ def async_generate_spot_desc(sightID_ls,sightTitle_ls):
         now_screen_state.append(viwe_spot_text)
         desc_i = Sightseeing_mongodb.get_summary_by_sight_id(sightID_i)
         spot_desc_text_ls.append(RobotNLG.GPT4(desc_i,SpotIntroGPT_prompt_text,[]))
-    
+
+# 並列処理開始-------------------------------------------------------------------------------------
 thread1 = threading.Thread(target=async_speach_json_result, args=(Select4_Bool,sightID_ls))
 thread2 = threading.Thread(target=async_generate_spot_reason, args=(sightTitle_ls,result_user_json,))
 thread3 = threading.Thread(target=async_generate_spot_desc, args=(sightID_ls,sightTitle_ls))
@@ -266,6 +259,7 @@ thread3.start()
 
 thread1.join()
 thread2.join()
+check_time_exceeded(start_time)
 #理由の発話
 speech_gen.speech_generate(spot_reason_text)
 system_output_text_ls.append(spot_reason_text)
@@ -276,6 +270,7 @@ system_output_text_ls.append(speach_t)
 for desc_i in spot_desc_text_ls:
     speech_gen.speech_generate(desc_i)
     system_output_text_ls.append(desc_i)
+    check_time_exceeded(start_time)
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
@@ -284,7 +279,6 @@ speech_gen.speech_generate("これら４つの観光地から２つの観光地�
 
 #二つの観光地を選ぶ段階---------------------------------------------------------------------------------
 title_id_json = dict(zip(sightID_ls, sightTitle_ls))
-print(title_id_json)
 choice_two_spot_prompt = f'''
     いま画面に4つの観光地が表示されています．
     状況は{now_screen_state}
@@ -314,6 +308,7 @@ while True:
         speach_text = "すみません,理解できませんでした．もう一度お願いします．"
     speech_gen.speech_generate(speach_text)
     system_output_text_ls.append(speach_text)
+    check_time_exceeded(start_time)
 
 trg2spotTitle = [Sightseeing_mongodb.get_title_by_sight_id(sightID_i) for sightID_i in trg2spotid]
 
@@ -344,13 +339,13 @@ def async_speach_spot(trg2spotid,trg2spotTitle):
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
 
-def async_search_route(trg2spotTitle):
+def async_search_route(trg2spotTitle,start_point,end_point):
     global route_desc_text
-
+    global journey_ls
     journey_ls = NAVITME_serach.get_route_text(0)#この0は候補の番目
 
     route_info_json = {
-        "start_end_spot":["JTBユニモール名古屋","JTBユニモール名古屋"],
+        "start_end_spot":[start_point,end_point],
         "via_spot":trg2spotTitle,
         "route_desc":journey_ls,
     }
@@ -358,15 +353,17 @@ def async_search_route(trg2spotTitle):
     route_desc_text = response_text
 
 #並列処理--------------------------------------------------------------------------------------------
+start_point, end_point = "JTBユニモール名古屋", "JTBユニモール名古屋"
 print("-------------start multi-thread processing (speach and serach route)-------------")
 thread1 = threading.Thread(target=async_speach_spot, args=(trg2spotid,trg2spotTitle))
-thread2 = threading.Thread(target=async_search_route, args=(trg2spotTitle,))
+thread2 = threading.Thread(target=async_search_route, args=(trg2spotTitle,start_point, end_point))
 # スレッドを開始
 thread1.start()
 thread2.start()
 # ここで、両方のスレッドが終了するのを待ちます
 thread1.join()
 thread2.join()
+check_time_exceeded(start_time)
 speech_gen.speech_generate(route_desc_text)
 system_output_text_ls.append(route_desc_text)
 
@@ -381,57 +378,33 @@ system_text_json = {
 Dialog_mongodb.update_data(unique_id,user_text_json)
 Dialog_mongodb.update_data(unique_id,system_text_json)
 #===================================================================================================
-# +++++++++++++++++++++++++++++++ LangChainとの対話 ++++++++++++++++++++++++++++++++++++++++++++++++++
+# +++++++++++++++++++++++++++++++ 根拠に基づく事後対話 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 speech_gen.speech_generate("以上が今回おすすめする観光プランになります．何か質問あれば何でも聞いてください！")
+reco_after_prompt = f"""
+    あなたは旅行代理店の接客のプロです．
+    この度のお客様は京都市内の観光を目的としてご来店されました．
+    対話の結果お客さんは以下の観光地を経由する旅行になりました．
+    {trg2spotTitle}
+    出発地は{start_point} で，到着地は，{end_point}です．
+    そしてこれらの観光地に以下の道順でいくことも決まっています．
+    {journey_ls}
+    これらの情報をもとに，今からお客様からの質疑応答があるので適切に回答し，接客を行ってください．
+    文章は1文程度で簡潔に答え，相手が応答できない形で終えてください。つまり，話題を終える会話をすることです．
+    
+"""
 
-
-from langchain.document_loaders import MongodbLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.memory import ConversationSummaryMemory
-from langchain.schema.document import Document
-
-OPEN_API_KEY = config.get("API_Key","OpenAI")
-
-loader = MongodbLoader(
-    connection_string='mongodb://localhost:27017/',
-    db_name='DRC2023_Dialog_DB',
-    collection_name=unique_id
-)
-
-# Document インスタンスを作成
-documents = loader.load()
-# text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=0)
-# all_splits = text_splitter.split_documents(documents)
-# print(all_splits)
-embeddings = OpenAIEmbeddings(openai_api_key=OPEN_API_KEY)
-vectorstore = Chroma.from_documents(documents=documents, embedding=embeddings)
-
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import ConversationalRetrievalChain
-
-# Langchain_prompt_path = os.path.join(script_dir,"DialogModules/Prompts/LangChain_prompt.txt")
-# with open(Langchain_prompt_path, 'r', encoding='utf-8') as f:
-#     # ファイルの内容を読み込む
-#     Langchain_prompt_text = f.read()
-
-
-llm = ChatOpenAI(openai_api_key=OPEN_API_KEY,model="gpt-4")
-retriever = vectorstore.as_retriever()
-memory = ConversationSummaryMemory(llm=llm,memory_key="chat_history",return_messages=True)
-qa = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memory=memory)
+user_input_log_after_recommend = [{"role": "system", "content":reco_after_prompt}]
 
 while True:
     user_input_text = voice_recog.recognize()
-    
-    systyem_output_text = qa(user_input_text)["answer"]
-    speech_gen.speech_generate(systyem_output_text)
-    
-    # 経過時間が10分を超えたらループを終了
-    if elapsed_time(start_time) > 10* 60 *1000:
+    user_input_log_after_recommend.append({"role": "user", "content":user_input_text})
+    speach_text = RobotNLG.GPT4(user_input_text,reco_after_prompt,user_input_log_after_recommend)
+    speech_gen.speech_generate(speach_text)
+    user_input_log_after_recommend.append({"role": "assistant", "content":speech_gen})
+    if check_time_exceeded(start_time,threshold_minutes=10):
         break
+    speech_gen.speech_generate("他に質問ありますでしょうか")
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 終わりの挨拶 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================

@@ -1,5 +1,5 @@
 
-def judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_time):
+def Judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_time):
     """
     この関数は、対話の状態に基づいて、ループを抜けるかどうかを判断します。
     以下の条件のいずれかがTrueの場合、この関数はTrueを返します：
