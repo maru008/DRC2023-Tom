@@ -2,6 +2,7 @@
 import os
 import sys
 import datetime
+import time
 import json
 import threading
 
@@ -17,6 +18,7 @@ from ServerModules.voice_recognition import VoiceRecognition
 from ServerModules.face_expression_generation import ExpressionGeneration
 from ServerModules.motion_generation import MotionGeneration
 from ServerModules.sight_view import SightViewTCPServer
+from ServerModules.tcp_server import ConversationSignalHandler
 
 from DialogModules.NLGModule import NLG 
 
@@ -66,6 +68,7 @@ voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRe
 face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
 sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
+TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -95,7 +98,19 @@ def async_send_data(data):
 user_input_text_ls = []
 system_output_text_ls = []
 resulting_sight_id_mtx = []
+#TCP開始サーバ接続------------------------------------------------------------------------------------
 #最初の時間を記録
+
+TCP_server.connect()
+print("send start command ...")
+TCP_server.connect_and_request_rule()
+print("Conversation start signal waiting ...")
+if TCP_server.check_start_signal():
+    pass
+TCP_server.close()
+print("Conversation started!")
+SectionPrint("対話開始")
+#対話開始-----------------------------------------------------------------------------------------------
 start_time = datetime.datetime.now()
 #お辞儀
 motion_gen.play_motion("greeting_deep")
