@@ -28,7 +28,7 @@ class NLG:
         result = openai.ChatCompletion.create(
             # model="gpt-3.5-turbo",
             model=model,
-            messages=past_messages
+            messages=past_messages,
         )
         response_message = {"role": "assistant", "content": result.choices[0].message.content}
         past_messages.append(response_message)
@@ -41,3 +41,43 @@ class NLG:
     def GPT4(self,new_message_text,settings_text,past_messages):
         response_message_text, past_messages = self.completion("gpt-4",new_message_text,settings_text,past_messages)
         return response_message_text
+    
+    def yield_GPT4_message(self,new_message_text, settings_text='', past_messages=[]):
+        max_tokens=2000
+        temperature=1.
+        top_p=.1
+        presence_penalty=0.
+        frequency_penalty=0.
+        
+        messages = past_messages.copy()  # 過去のメッセージを取得
+
+        # システム設定のメッセージを追加
+        if settings_text and not messages:
+            messages.append({"role": "system", "content": settings_text})
+
+        # ユーザのメッセージを追加
+        messages.append({'role': 'user', 'content': new_message_text})
+
+        # APIを叩く、streamをTrueに
+        resp = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            presence_penalty=presence_penalty,
+            frequency_penalty=frequency_penalty,
+            stream=True
+        )
+
+        # 返答を受け取り、逐次yield
+        response_text = "" 
+        for chunk in resp:
+            if chunk:
+                content = chunk['choices'][0]['delta'].get('content')
+                if content:
+                    response_text += content
+                    yield content
+
+        # 必要に応じて、最後の応答をリストに追加
+        messages.append({'role': 'assistant', 'content': response_text})
