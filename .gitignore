@@ -14,7 +14,7 @@ Sightseeing_Spot_data/data/preparation_data/*.json
 #テストファイル
 Dialog_app/src/System_tests/
 Dialog_app/src/test_*.py
-
+movie/
 #以降pythonデフォルト==============================
 # Byte-compiled / optimized / DLL files
 __pycache__/
