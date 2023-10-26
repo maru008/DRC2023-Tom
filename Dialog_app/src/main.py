@@ -342,16 +342,23 @@ desc_4spot_prompt = f"""
     決して箇条書きによる出力はしてはいけません．
     決してあなた自身で問答をする形式の出力をはやめてください．
 
-    
-    もしお客さんが質問がないと発話していると判断したら最後に $break$ と出力してください．
-    質問がないことが話される可能性があるので，その時は必ず$break$と出力してください
 """
 
-def contains_break_string(s):
-    """
-    質問がないかどうかを判定する間数
-    """
-    return bool(re.search(r'\$break\$', s))
+
+def async_judge_any_question(user_input_text):
+    global judge_any_question
+    judge_any_question_prompt = """
+            次に旅行代理店にきたお客の質問が入力されます．
+            質問がありそうであれば False という文字列を出力して．
+            また質問がなく疑問を解決したようであれば True という文字列を返して．
+            出力は必ず True もしくは False のみにしてください．
+            """
+    res = str(RobotNLG.GPT4(user_input_text,judge_any_question_prompt,[]))
+    if "True" in res:
+        judge_any_question = True
+    else:
+        judge_any_question = False
+    
 if not check_time_exceeded(start_time,threshold_minutes=7):
     speach_t = "以上が4つの観光地の説明です。何か質問あればなんでもお答えします．いかがでしょうか"
     speech_gen.speech_generate(speach_t)
@@ -361,22 +368,29 @@ if not check_time_exceeded(start_time,threshold_minutes=7):
         user_input_text = voice_recog.recognize()
         user_input_log_desc4spot.append({"role": "user", "content":user_input_text})
         if check_time_exceeded(start_time,threshold_minutes=7):
-            speach_t = "すみません，お時間が迫っているようなので先に進みます．"
+            speach_t = "申し訳ありません，お時間が迫っているようなので先に進みます．"
             speech_gen.speech_generate(speach_t)
             break
         else:
             response_queue = queue.Queue()
             speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, user_input_text, desc_4spot_prompt, user_input_log_desc4spot))
+            judge_any_question_thread = threading.Thread(target=async_judge_any_question,args=(user_input_text,))
             speech_thread.start()
+            judge_any_question_thread.start()
             stop_generation = False
             async_speech_generate()
-            # if contains_break_string(response_text):
-            #     break
+            
+            speech_thread.join()
+            judge_any_question_thread.join()
+            
+            if judge_any_question:
+                speech_gen.speech_generate("質問は解消されたようですね。")
+                break
             print(response_text)
             user_input_log_desc4spot.append({"role": "assistant", "content":response_text})
     speech_gen.speech_generate("それではどの２つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
 else:
-    speech_gen.speech_generate("すみません，お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
+    speech_gen.speech_generate("申し訳ありません，お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
     
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
@@ -492,7 +506,14 @@ reco_after_prompt = f"""
     そしてこれらの観光地に以下の道順でいくことも決まっています。
     {journey_ls}
     これらの情報をもとに、今からお客様からの質疑応答があるので適切に回答し、接客を行ってください。
-    文章は1文程度で簡潔に答え、相手が応答できない形で終えてください。つまり、話題を終える会話をすることです。
+    質問がない場合でも，何か別の話題を振って会話を続けていってください．
+    
+    出力する文の長さは短くして，文章も2から3文程度で相手を圧倒しないようにしてください。
+    決して，「また」と出力しないようにしてください．
+    決して箇条書きによる出力はしてはいけません．
+    決してあなた自身で問答をする形式の出力をはやめてください．
+
+    それでは接客を始めます
 """
 
 user_input_log_after_recommend = [{"role": "system", "content":reco_after_prompt}]
@@ -510,9 +531,9 @@ while True:
     user_input_log_after_recommend.append({"role": "assistant", "content":speech_gen})
     
     #終了シグナルの判定
-    if check_time_exceeded(start_time,threshold_minutes=10):
+    if check_time_exceeded(start_time,threshold_minutes=10.5):
         break
-    speech_gen.speech_generate("他に質問ありますでしょうか")
+    
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 終わりの挨拶 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
