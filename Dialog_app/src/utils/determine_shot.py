@@ -1,6 +1,6 @@
 import random
 
-all_LGenre = ['見る', '食べる', '遊ぶ', '温泉地', '喫茶・甘味', '買う']
+all_LGenre = ['見る', '遊ぶ', '温泉地']
 
 change_subject_text = {
     '見る':'ところで何かみたい観光地などありますでしょうか',
