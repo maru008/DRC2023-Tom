@@ -9,6 +9,7 @@ OSRM_server/data/
 Sightseeing_Spot_data/data/output_data/*.json
 Sightseeing_Spot_data/data/output_data/*.csv
 Sightseeing_Spot_data/data/preparation_data/*.json
+Sightseeing_Spot_data/src/kyoto_SightseeingSpot_map.html
 
 #テストファイル
 Dialog_app/src/System_tests/

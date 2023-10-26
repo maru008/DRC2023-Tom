@@ -11,7 +11,7 @@ import threading
 from utils.config_reader import read_config
 from utils.general_tool import SectionPrint,check_time_exceeded
 from utils.TCPserver import SocketConnection
-from utils.NAVITIME_Route_serach import NAVITME
+from Dialog_app.src.utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import change_subject,select4spot
 from utils.judge_break import Judge_roop_break,Judge_change_subject
 
@@ -46,13 +46,12 @@ else:
     sys.exit('正しく入力してください')
 #　システムチェックでAPIを使わないのためのコマンド
 
-# console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
-# console_input = "y"
-# if console_input == "n":
-#     USE_GPT_API = False
-# console_input = input("いい淀みを付与しますか？:(y/n)")
-# if console_input == "y":
-#     ADD_HESITATION = True
+console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
+if console_input == "n":
+    USE_GPT_API = False
+console_input = input("いい淀みを付与しますか？:(y/n)")
+if console_input == "y":
+    ADD_HESITATION = True
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ データベース準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -464,6 +463,7 @@ route_info_json = {
         "route_desc":journey_ls,
 }
 past_messages = []
+
 #経路について発話
 response_queue = queue.Queue()
 speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, user_input_text, desc_4spot_prompt, user_input_log_desc4spot))
@@ -472,6 +472,7 @@ speech_thread.start()
 stop_generation = False
 async_speech_generate()
 # yield_speech_message(RobotNLG.yield_GPT4_message, str(route_info_json), routeInfo_prompt_text, past_messages)
+
 
 ## 対話ログを追加--------------------------------------------------------------------------------------------
 # user_text_json = {
