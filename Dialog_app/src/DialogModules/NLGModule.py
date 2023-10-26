@@ -60,7 +60,7 @@ class NLG:
 
         # APIを叩く、streamをTrueに
         resp = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
@@ -78,6 +78,3 @@ class NLG:
                 if content:
                     response_text += content
                     yield content
-
-        # 必要に応じて、最後の応答をリストに追加
-        messages.append({'role': 'assistant', 'content': response_text})
