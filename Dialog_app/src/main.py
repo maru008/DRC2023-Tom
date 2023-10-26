@@ -9,7 +9,7 @@ import threading
 from utils.config_reader import read_config
 from utils.general_tool import SectionPrint,check_time_exceeded
 from utils.TCPserver import SocketConnection
-from Dialog_app.src.utils.NAVITIME_Route_serach import NAVITME
+from utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import change_subject,select4spot
 from utils.judge_break import Judge_roop_break,Judge_change_subject
 
