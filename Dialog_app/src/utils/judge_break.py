@@ -25,7 +25,7 @@ def Judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_t
         return True
     
     #対話が５ターン続いていて，観光地のカテゴリが1つ以上で,その中に4つ以上データがあればBreak
-    if Dialog_turn_num >5 and len(resulting_sight_id_mtx) >= 1 and len(resulting_sight_id_mtx[0]) >= 4:
+    if Dialog_turn_num > 5 and len(resulting_sight_id_mtx) >= 1 and len(resulting_sight_id_mtx[0]) >= 4:
         return True
     
     return False 
@@ -39,4 +39,5 @@ def Judge_change_subject(resulting_sight_id_mtx,Dialog_turn_num):
     # 対話ターンが4の倍数の時で，resulting_sight_id_mtxがまだ１件しか取れてない場合
     if Dialog_turn_num % 4 == 0 and len(resulting_sight_id_mtx) <= 1:
         return True
-    return False
+    else:
+        return False
