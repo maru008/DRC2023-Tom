@@ -26,8 +26,7 @@ class SpeechGeneration:
         if self.DIALOG_MODE == "robot_dialog":
             if self.ADD_HESITATION:
                 #いい淀み付与コードの実行
-                text = add_hesitation(text)
-                
+                text = add_hesitation(text).replace("$", "<break time=\"0.2s\"/>").replace(":", "ーー。")
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
                 self.sock.connect((self.ip, self.port))
@@ -37,7 +36,7 @@ class SpeechGeneration:
                     "speaker": "Mizuki",
                     "duration-information": False,
                     "speechmark": False,
-                    "text": "<speak>" + (text.replace("$", "<break time=\"0.2s\"/>").replace(":", "ーー。")) + "</speak>"
+                    "text": "<speak>" + text + "</speak>"
                 }
                 command = json.dumps(command_dict)
                 self._send_command(command)
