@@ -105,7 +105,7 @@ def yield_speech_message(generator_function, user_input_text, ChatGPT_prompt_tex
         speach_t += talk
         if "。" in talk or "！" in talk or "？" in talk:
             sentence_count +=1
-            if sentence_count == 1 and len(speach_t) < 15:#短い一文ならpass
+            if sentence_count == 1 and len(speach_t) < 20:#短い一文ならpass
                 pass
             else:
                 response_queue.put(speach_t) 
@@ -333,49 +333,56 @@ desc_4spot_prompt = f"""
     あなたは旅行代理店の接客のプロです。
     この度のお客様は京都市内の観光を目的としてご来店されました。
     
-    今、4つの観光地で悩んでいます。
+    今、お客様は4つの観光地で悩んでいます。
     4つのスポットは以下のJSON形式で書かれており，観光地とその説明が書かれています．
     {spot_desc_text_json}
-    お客様がこれらの観光地について質問をしようとしているので，上のデータ基づいて適切に対応してください．．
+    お客様がこれらの観光地について質問をしようとしているので，上のデータ基づいて適切に対応してください．
     
     箇条書きや掛け合いの文書など発話としておかしな出力はしないでください．
-    会話は１文程度で相手を圧倒しないようにしてください。
+    出力する文の長さは短くして，文章も2から3文程度で相手を圧倒しないようにしてください。
+    決して，「また」と出力しないようにしてください．
+    決して箇条書きによる出力はしてはいけません．
+    決してあなた自身で問答をする形式の出力をはやめてください．
+
     
     もしお客さんが質問がないと発話していると判断したら最後に $break$ と出力してください．
+    質問がないことが話される可能性があるので，その時は必ず$break$と出力してください
 """
+
 def contains_break_string(s):
     """
     質問がないかどうかを判定する間数
     """
     return bool(re.search(r'\$break\$', s))
-speach_t = "以上が4つの観光地の説明です。何か質問あればなんでもお答えします．いかがでしょうか"
-speech_gen.speech_generate(speach_t)
+if not check_time_exceeded(start_time,threshold_minutes=7):
+    speach_t = "以上が4つの観光地の説明です。何か質問あればなんでもお答えします．いかがでしょうか"
+    speech_gen.speech_generate(speach_t)
 
-user_input_log_desc4spot = []
-while True:
-    user_input_text = voice_recog.recognize()
-    user_input_log_desc4spot.append({"role": "user", "content":user_input_text})
-    if check_time_exceeded(start_time,threshold_minutes=15):
-        speach_t = "すみません，お時間が迫っているようなので先に進みます．"
-        speech_gen.speech_generate(speach_t)
-        break
-    else:
-        response_queue = queue.Queue()
-        speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, user_input_text, desc_4spot_prompt, user_input_log_desc4spot))
-        speech_thread.start()
-        stop_generation = False
-        async_speech_generate()
-        if contains_break_string(response_text):
+    user_input_log_desc4spot = []
+    while True:
+        user_input_text = voice_recog.recognize()
+        user_input_log_desc4spot.append({"role": "user", "content":user_input_text})
+        if check_time_exceeded(start_time,threshold_minutes=7):
+            speach_t = "すみません，お時間が迫っているようなので先に進みます．"
+            speech_gen.speech_generate(speach_t)
             break
-        print(response_text)
-        user_input_log_desc4spot.append({"role": "assistant", "content":response_text})
-        
-        
-
+        else:
+            response_queue = queue.Queue()
+            speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, user_input_text, desc_4spot_prompt, user_input_log_desc4spot))
+            speech_thread.start()
+            stop_generation = False
+            async_speech_generate()
+            # if contains_break_string(response_text):
+            #     break
+            print(response_text)
+            user_input_log_desc4spot.append({"role": "assistant", "content":response_text})
+    speech_gen.speech_generate("それではどの２つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
+else:
+    speech_gen.speech_generate("すみません，お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
+    
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-speech_gen.speech_generate("ありがとうございます。それではどの２つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
 
 #二つの観光地を選ぶ段階---------------------------------------------------------------------------------
 title_id_json = dict(zip(sightID_ls, sightTitle_ls))
@@ -506,7 +513,7 @@ while True:
     user_input_log_after_recommend.append({"role": "assistant", "content":speech_gen})
     
     #終了シグナルの判定
-    if check_time_exceeded(start_time,threshold_minutes=20):
+    if check_time_exceeded(start_time,threshold_minutes=10):
         break
     speech_gen.speech_generate("他に質問ありますでしょうか")
 #===================================================================================================
