@@ -9,15 +9,14 @@ class VoiceRecognition:
         self.DIALOG_MODE = DIALOG_MODE
         self.ip = ip
         self.port = int(port)
+        # self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock = None
 
     def recognize(self):
         confidence_threshold = 0.5  # Set your desired threshold here
-
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if self.DIALOG_MODE == "robot_dialog":
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.connect((self.ip, self.port))
             self.start_listen()
-            
             final_results = []
             
             while True:
@@ -53,7 +52,6 @@ class VoiceRecognition:
                     break
 
             self.stop_listen()
-            self.sock.close()
             User_res_text = ' '.join(final_results)
             print("User> ",User_res_text)
             return User_res_text
@@ -99,15 +97,36 @@ class VoiceRecognition:
         self.stop_listen()  # この行をコメントアウトまたは削除
 
     def start_listen(self):
+        if not self.is_socket_connected():
+            try:
+                self.sock.connect((self.ip, self.port))
+            except Exception as e:
+                print(f"Error connecting to {self.ip}:{self.port}. Details: {e}")
+                return
+
         command = "start"
         self._send_command(command)
         print("VoiceRecognition: start listening")
 
     def stop_listen(self):
         command = "stop"
+        if not self.is_socket_connected():
+            try:
+                self.sock.connect((self.ip, self.port))
+            except Exception as e:
+                print(f"Error connecting to {self.ip}:{self.port}. Details: {e}")
+                return
         self._send_command(command)
         print("VoiceRecognition: stop listening")
 
     def listen_once(self, silent_interval=3):
         self.sock.settimeout(silent_interval)
         self.listener()  # Call the listener method directly
+    
+    def is_socket_connected(self):
+        try:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.getpeername()
+            return True
+        except socket.error:  # Typically raises a socket.error if not connected
+            return False
