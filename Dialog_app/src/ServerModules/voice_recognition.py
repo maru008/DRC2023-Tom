@@ -5,12 +5,13 @@ import traceback
 from threading import Thread
 
 class VoiceRecognition:
-    def __init__(self, DIALOG_MODE, ip, port):
+    def __init__(self, DIALOG_MODE, ip, port,motion_obj):
         self.DIALOG_MODE = DIALOG_MODE
         self.ip = ip
         self.port = int(port)
         # self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock = None
+        self.motion_gen = motion_obj
 
     def recognize(self):
         confidence_threshold = 0.5  # Set your desired threshold here
@@ -23,7 +24,7 @@ class VoiceRecognition:
                 received_data = self.sock.recv(1024)
                 if not received_data:
                     continue
-                
+                self.motion_gen.play_motion("nod_slight")
                 result = self._parse_data(received_data)
                 # print(result)
                 if result["type"] in ["final", "failed"] and result["user_utterance"] != "" and result["confidence"] >= confidence_threshold:
@@ -46,7 +47,6 @@ class VoiceRecognition:
                                     result = new_result  # 更新された結果を保存
                                     start_time = time.time()  # タイマーをリセット
                         except socket.error:
-                            # データがなければここに来る
                             pass
                         time.sleep(0.01)  # 短いスリープでループを遅らせる
                     break

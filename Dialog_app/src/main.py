@@ -77,11 +77,14 @@ Sightseeing_mongodb = SightseeingDBHandler("Sightseeing_Spot_DB")
 # +++++++++++++++++++++++++++++++ ロボットサーバ準備 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 speech_gen = SpeechGeneration(DIALOG_MODE,ADD_HESITATION,IP,config.get("Server_Info","SpeechGenerator_port"))
-voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"))
+# voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"))
 face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
-sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
-TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
+voice_recog = VoiceRecognition(DIALOG_MODE,"192.168.0.4",config.get("Server_Info","SpeechRecognition_port"),motion_gen)
+# sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
+sight_view = SightViewTCPServer(DIALOG_MODE,"192.168.0.5",config.get("Server_Info","SiteViewer_port"))
+# TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
+TCP_server = ConversationSignalHandler(DIALOG_MODE,"192.168.0.3",8001)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -163,8 +166,7 @@ SectionPrint("対話開始")
 start_time = datetime.datetime.now()
 #お辞儀
 motion_gen.play_motion("greeting_deep")
-speach_t = """こんにちは！旅行代理店ロボットのしょうこです。今回お客様は京都への旅行を考えていると聞きました。私との会話でお客様に最適な観光地を見つけるお手伝いをします！何か旅行で体験したいことなどを教えて下さい。よろしくお願いします。"""
-speach_t = "こんにちは！よろしくお願いします"
+speach_t = "こんにちは！旅行代理店ロボットのあいです。今回お客様は京都への旅行を考えていると聞きました。私との会話でお客様に最適な観光地を見つけるお手伝いをします！何か旅行で体験したいことなどを教えて下さい。決まっていなくても大丈夫です。よろしくお願いします。"
 speech_gen.speech_generate(speach_t)
 system_output_text_ls.append(speach_t)
 #自分の声を受け取らない
@@ -187,6 +189,7 @@ while True:
     Judge_change_subject_bool = Judge_change_subject(resulting_sight_id_mtx,Dialog_turn_num)
     print(f"終了:{Judge_break_bool}, 話題変更:{Judge_change_subject_bool}")
     # 発話認識
+    
     motion_gen.play_motion("nod_slight")
     user_input_text = voice_recog.recognize()
     motion_gen.play_motion("nod_slight")
@@ -228,7 +231,7 @@ while True:
         if str(combination) not in already_serach_json:
             condition_json = json.dumps(combination)
             sight_ids = Sightseeing_mongodb.get_sight_ids_by_multiple_conditions(condition_json)
-            if len(sight_ids) >= 2 and len(sight_ids) < 100:
+            if len(sight_ids) >= 1 and len(sight_ids) < 100:
                 print("対象クエリ:",combination)
                 print("結果観光地数:",len(sight_ids))
                 resulting_sight_id_mtx.append(sight_ids)
@@ -339,12 +342,13 @@ desc_4spot_prompt = f"""
     この度のお客様は京都市内の観光を目的としてご来店されました。
     
     今、お客様は4つの観光地で悩んでいます。
-    4つのスポットは以下のJSON形式で書かれており，観光地とその説明が書かれています．
+    4つのスポットは以下のJSON形式で書かれており、観光地とその説明が書かれています。
     {spot_desc_text_json}
-    お客様がこれらの観光地について質問をしようとしているので，上のデータ基づいて適切に対応してください．
+    お客様がこれらの観光地について質問をしようとしているので，上のデータを参考に適切に対応してください．
+    ただし、観光地は上の4つ以外を絶対に説明してはいけません。
     
     箇条書きや掛け合いの文書など発話としておかしな出力はしないでください．
-    出力する文の長さは短くして，文章も2から3文程度で相手を圧倒しないようにしてください。
+    出力する文の長さは短くして、文章も2から3文程度で相手を圧倒しないようにしてください。
     決して，「また」と出力しないようにしてください．
     決して箇条書きによる出力はしてはいけません．
     決してあなた自身で問答をする形式の出力をはやめてください．
@@ -394,10 +398,12 @@ if not check_time_exceeded(start_time,threshold_minutes=10):
                 break
             print(response_text)
             user_input_log_desc4spot.append({"role": "assistant", "content":response_text})
+    motion_gen.play_motion("greeting_deep")
     speech_gen.speech_generate("それではどの２つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
 else:
+    motion_gen.play_motion("greeting_deep")
     speech_gen.speech_generate("申し訳ありません，お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
-    
+
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -538,13 +544,16 @@ while True:
     #終了シグナルの判定
     if check_time_exceeded(start_time,threshold_minutes=10.5):
         break
-    
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 終わりの挨拶 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-motion_gen.play_motion("greeting_deep")
-speech_gen.speech_generate("申し訳ありません、非常に名残惜しいですが、お時間となってしまいました。以上で案内を終了します。ありがとうございました。")
 
+speech_gen.speech_generate("申し訳ありません、非常に名残惜しいですが、お時間となってしまいました。")
+motion_gen.play_motion("greeting_deep")
+speech_gen.speech_generate("以上で案内を終了します。ありがとうございました。")
+
+# NLUサーバとの接続終了
+socket_conn.send_data("終了")
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 会話終了後の処理 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
