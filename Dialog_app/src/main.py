@@ -157,9 +157,16 @@ SectionPrint("対話開始")
 start_time = datetime.datetime.now()
 #お辞儀
 motion_gen.play_motion("greeting_deep")
-speach_t = "こんにちは！旅行代理店ロボットのあいです。今回お客様は京都への旅行を考えていると聞きました。私との会話でお客様に最適な観光地を見つけるお手伝いをします！何か旅行で体験したいことなどを教えて下さい。決まっていなくても大丈夫です。よろしくお願いします。"
+speach_t = """こんにちは！旅行代理店ロボットのあいです。
+                今回お客様は京都への旅行を考えていると聞きました。
+                私との会話でお客様に最適な観光地を見つけるお手伝いをします！
+                何か旅行で体験したいことなどを教えて下さい。
+                決まっていなくても大丈夫です。"""
 speech_gen.speech_generate(speach_t)
 system_output_text_ls.append(speach_t)
+
+motion_gen.play_motion("greeting_deep")
+speech_gen.speech_generate("よろしくお願いします。")
 #自分の声を受け取らない
 voice_recog.start_listen()
 voice_recog.stop_listen()
@@ -178,14 +185,21 @@ while True:
     Judge_break_bool = Judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_time)
     #話題変換ジャッジ(Judge_change_subject_boolがtureなら話題を変換する)
     Judge_change_subject_bool = Judge_change_subject(resulting_sight_id_mtx,Dialog_turn_num)
-    print(f"終了:{Judge_break_bool}, 話題変更:{Judge_change_subject_bool}")
+    print(f"ループ終了:{Judge_break_bool}, 話題変更:{Judge_change_subject_bool}")
     # 発話認識
     
     motion_gen.play_motion("nod_slight")
     user_input_text = voice_recog.recognize()
     motion_gen.play_motion("nod_slight")
     user_input_log_firstContact.append({"role": "user", "content":user_input_text})
-    
+    if Judge_change_subject_bool:
+        user_input_log_firstContact = [{"role": "system", "content":ChatGPT_prompt_text}]
+        user_input_log_firstContact.append({"role": "user", "content":user_input_text})
+        user_input_text += "\n<change>"
+    elif Judge_break_bool:
+        user_input_text += "\n<finish>"
+    else:
+        user_input_text += "\n<keep>"
     #===================================================================================================
     # 非同期処理開始
     response_queue = queue.Queue()
@@ -233,14 +247,12 @@ while True:
     # 次のフェーズへ行くかどうかの判定
     if Judge_break_bool:
         break
-    else:
-        # 話題変換をするかどうかの判定
-        if Judge_change_subject_bool:
-            response_text = change_subject(data_as_json)
-            speech_gen.speech_generate(response_text)
-            #chatgptのログを初期化（最大トークン数エラーを回避するため）
-            user_input_log_firstContact = [{"role": "system", "content":ChatGPT_prompt_text}]
-            user_input_log_firstContact.append({"role": "assistant", "content":response_text})
+    # else:
+    #     # 話題変換をするかどうかの判定
+    #     if Judge_change_subject_bool:
+    #         response_text = change_subject(data_as_json)
+    #         speech_gen.speech_generate(response_text)
+    #         #chatgptのログを初期化（最大トークン数エラーを回避するため）
     # 時間表示
     print("---------------------------------")
     check_time_exceeded(start_time)
