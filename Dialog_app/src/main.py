@@ -270,8 +270,8 @@ SectionPrint("4つの観光地推薦・説明")
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-# 配列から4つを選ぶ----------------------------------------------------------------------------------------
 
+# 配列から4つを選ぶ----------------------------------------------------------------------------------------
 print("select 4 spot...",end="")
 Select4_Bool,sightID_ls = select4spot(resulting_sight_id_mtx)
 print("selected->",sightID_ls)
@@ -289,7 +289,12 @@ def async_speach_json_result(Select4_Bool,sightID_ls):
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
     if not Select4_Bool:
-        speach_t = "ただ申し訳ありません。私の実力不足でお客様に合致した観光地を見つけることができませんでした。私ももっと学ばなければいけません。今回は京都市内でおすすめの観光地をいくつかピックアップさせていただきます。少しお待ちください。"
+        speach_t = """ただ，申し訳ありません。
+                      私の実力不足でお客様に合致した観光地を見つけることができませんでした。
+                      私ももっと学ばなければいけません。
+                      今回は京都市内でおすすめの観光地をいくつかピックアップさせていただきます。
+                      どこも魅力的なので安心してください。"""
+        result_user_json = {}
         speech_gen.speech_generate(speach_t)
         system_output_text_ls.append(speach_t)
     else:
@@ -386,7 +391,8 @@ def async_judge_any_question(user_input_text):
     else:
         judge_any_question = False
 
-if not check_time_exceeded(start_time,threshold_minutes=10):
+next_step_break_minutes = 8
+if not check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes):
     speach_t = "以上が4つの観光地の説明です。少し説明が長かったですね。何か質問あればなんでもお答えできますよ。いかがでしょうか"
     speech_gen.speech_generate(speach_t)
 
@@ -394,7 +400,7 @@ if not check_time_exceeded(start_time,threshold_minutes=10):
     while True:
         user_input_text = voice_recog.recognize()
         user_input_log_desc4spot.append({"role": "user", "content":user_input_text})
-        if check_time_exceeded(start_time,threshold_minutes=10):
+        if check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes):
             speach_t = "申し訳ありません、お時間が迫っているようなので先に進みます。"
             speech_gen.speech_generate(speach_t)
             break
@@ -578,7 +584,7 @@ while True:
     user_input_log_after_recommend.append({"role": "assistant", "content":response_text})
     
     #終了シグナルの判定
-    if check_time_exceeded(start_time,threshold_minutes=10.5):
+    if check_time_exceeded(start_time,threshold_minutes=10):
         break
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 終わりの挨拶 ++++++++++++++++++++++++++++++++++++++++++++++++++++
