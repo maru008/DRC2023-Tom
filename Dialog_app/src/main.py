@@ -245,6 +245,7 @@ while True:
     print("---------------------------------")
     check_time_exceeded(start_time)
 result_user_json = data_as_json
+SectionPrint("4つの観光地推薦・説明")
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -263,13 +264,16 @@ print("選ばれた観光地リスト: ",sightTitle_ls)
 spot_desc_text_ls = []
 now_screen_state = []
 def async_speach_json_result(Select4_Bool,sightID_ls):
-    speach_t ="ありがとうございます。今回の旅行がどういうものか、そしてあなたがどんな人かわかりました！それではいくつか観光地を検索いたします。少しお待ちください。"
+    speach_t ="ありがとうございます。今回の旅行がどういうものか、そしてあなたがどんな人かわかりました！"
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
     if not Select4_Bool:
-        speach_t = "申し訳ありません。お客様に合致した観光地を見つけることができませんでした。今回は京都で代表的な観光地を上げさせていただきます。"
+        speach_t = "ただ申し訳ありません。私の実力不足でお客様に合致した観光地を見つけることができませんでした。私ももっと学ばなければいけません。今回は京都市内でおすすめの観光地をいくつかピックアップさせていただきます。少しお待ちください。"
         speech_gen.speech_generate(speach_t)
         system_output_text_ls.append(speach_t)
+    else:
+        speach_t ="それではいくつか観光地を検索いたします。少しお待ちください。"
+        speech_gen.speech_generate(speach_t)
     view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
     sight_view.send_data(view_spot_json)
     speach_t = "こちらの画面に、今回お客様に推薦する4つの観光地を表示しています。これら4つの観光地から2つを選んでいただきます。"
@@ -292,7 +296,8 @@ def async_generate_spot_desc(sightID_ls,sightTitle_ls):
     head_text_ls = ["まず左上は、","次に右上は、","その左下は、","最後に右下は、"]
     for i,sightID_i in enumerate(sightID_ls):
         print(f"creating {sightID_i} desc")
-        viwe_spot_text = head_text_ls[i]  + sightTitle_ls[i] + "の写真と地図です。ご覧ください。"
+        viwe_spot_text = head_text_ls[i]  + sightTitle_ls[i] + "の写真と地図です。"
+        time.sleep(0.1)
         spot_desc_text_ls.append(viwe_spot_text)
         now_screen_state.append(viwe_spot_text)
         desc_i = Sightseeing_mongodb.get_summary_by_sight_id(sightID_i)
@@ -359,9 +364,9 @@ def async_judge_any_question(user_input_text):
         judge_any_question = True
     else:
         judge_any_question = False
-    
+
 if not check_time_exceeded(start_time,threshold_minutes=10):
-    speach_t = "以上が4つの観光地の説明です。何か質問あればなんでもお答えします．いかがでしょうか"
+    speach_t = "以上が4つの観光地の説明です。少し説明が長かったですね。何か質問あればなんでもお答えできますよ。いかがでしょうか"
     speech_gen.speech_generate(speach_t)
 
     user_input_log_desc4spot = []
@@ -369,7 +374,7 @@ if not check_time_exceeded(start_time,threshold_minutes=10):
         user_input_text = voice_recog.recognize()
         user_input_log_desc4spot.append({"role": "user", "content":user_input_text})
         if check_time_exceeded(start_time,threshold_minutes=10):
-            speach_t = "申し訳ありません，お時間が迫っているようなので先に進みます．"
+            speach_t = "申し訳ありません、お時間が迫っているようなので先に進みます。"
             speech_gen.speech_generate(speach_t)
             break
         else:
@@ -389,16 +394,20 @@ if not check_time_exceeded(start_time,threshold_minutes=10):
                 break
             print(response_text)
             user_input_log_desc4spot.append({"role": "assistant", "content":response_text})
+    
+    speech_gen.speech_generate("それではどの２つの観光地に行くかを選んでいただきたいです。")
     motion_gen.play_motion("greeting_deep")
-    speech_gen.speech_generate("それではどの２つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
+    speech_gen.speech_generate("よろしくお願いします。")
+    
 else:
+    speech_gen.speech_generate("申し訳ありません、お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。")
     motion_gen.play_motion("greeting_deep")
-    speech_gen.speech_generate("申し訳ありません、お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
+    speech_gen.speech_generate("よろしくお願いします。")
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-
+SectionPrint("2つの観光地に絞る・質疑応答")
 #二つの観光地を選ぶ段階---------------------------------------------------------------------------------
 title_id_json = dict(zip(sightID_ls, sightTitle_ls))
 choice_two_spot_prompt = f'''
@@ -440,6 +449,7 @@ Dialog_mongodb.update_data(unique_id,User_going_spot)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 経路作成 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
+SectionPrint("経路作成")
 lat1, long1 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[0])
 lat2, long2 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[1])
 NAVITME_serach = NAVITME(config,lat1, long1, lat2, long2)
@@ -453,7 +463,7 @@ with open(route_search_prompt_path, 'r', encoding='utf-8') as f:
 def async_speach_spot(trg2spotTitle):
     speach_t = f"ありがとうございます。お客様が行きたいスポットは{trg2spotTitle[0]}と{trg2spotTitle[1]}ですね。"
     speech_gen.speech_generate(speach_t)
-    speach_t = "それでは明日の8時にこの店から出発し、公共交通機関で観光地を巡り、いちにちで帰ってくるプランを検索いたします。少しお待ちください。"
+    speach_t = "それでは明日はちじにこの店から出発し、公共交通機関で観光地を巡り、いちにちで帰ってくるプランを作成します。少しお待ちください。"
     speech_gen.speech_generate(speach_t)
 
 def async_search_route():
@@ -493,13 +503,14 @@ print("total_move_time_minutes:",total_move_time_minutes)
 hours = total_move_time_minutes // 60  # 分を60で割った商が時間数
 minutes = total_move_time_minutes % 60  # 分を60で割った余りが分数
 
-print(f'移動の合計時間は{hours}時間{minutes}分')
+# print(f'移動の合計時間は{hours}時間{minutes}分')
 # yield_speech_message(RobotNLG.yield_GPT4_message, str(route_info_json), routeInfo_prompt_text, past_messages)
 speech_gen.speech_generate(f'移動の合計時間は{hours}時間{minutes}分なので，それぞれの観光地に十分滞在することができますよ！楽しんでください！')
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 根拠に基づく推薦事後対話 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
+SectionPrint("最後の質疑応答")
 speech_gen.speech_generate("以上が今回おすすめする観光プランになります。何か質問あれば何でもお答えできます！いかがでしょうか")
 reco_after_prompt = f"""
     あなたは旅行代理店の接客のプロです。
@@ -512,7 +523,7 @@ reco_after_prompt = f"""
     これらの情報をもとに、今からお客様からの質疑応答があるので適切に回答し、接客を行ってください。
     質問がない場合でも，何か別の話題を振って会話を続けていってください．
     
-    出力する文の長さは短くして，文章も2から3文程度で相手を圧倒しないようにしてください。
+    出力する文の長さは短くして、文章も2ー3文程度で相手を圧倒しないようにしてください。
     決して，「また」と出力しないようにしてください．
     決して箇条書きによる出力はしてはいけません．
     決してあなた自身で問答をする形式の出力をはやめてください．
@@ -541,9 +552,9 @@ while True:
 # +++++++++++++++++++++++++++++++ 終わりの挨拶 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 
-speech_gen.speech_generate("申し訳ありません、非常に名残惜しいですが、お時間となってしまいました。")
+speech_gen.speech_generate("申し訳ありません、非常に名残惜しいですが、お時間となってしまいました。以上で案内を終了します。 良い旅をお過ごしください！")
 motion_gen.play_motion("greeting_deep")
-speech_gen.speech_generate("以上で案内を終了します。ありがとうございました。")
+speech_gen.speech_generate("ありがとうございました。")
 
 # NLUサーバとの接続終了
 socket_conn.send_data("終了")
