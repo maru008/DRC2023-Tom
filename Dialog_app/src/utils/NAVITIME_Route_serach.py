@@ -66,18 +66,19 @@ class NAVITME:
         response = requests.get(url, headers=headers, params=querystring)
         return response.json()
 
-    def get_route_text(self,trg_i):
+    def get_route_text(self,trg_i,spot_title_ls):
         res_data = self.request_NAVITIME()
-        journeys,total_move_time_minutes = format_journey(res_data,trg_i)
+        journeys,total_move_time_minutes = format_journey(res_data,trg_i,spot_title_ls)
         return journeys,total_move_time_minutes
 
-def format_journey(data,trg_i):
+def format_journey(data,trg_i,spot_title_ls):
     journeys = []
     journey = ""
     prev_point = "start"  # 初期値として'start'を設定
     move_type = ""
     time = ""
     total_move_time_minutes = 0
+    spot_i = 0
     for i in range(len(data["items"][0]["sections"])):
         sec_i = data["items"][trg_i]["sections"][i]
         type_i = sec_i['type']
@@ -92,6 +93,8 @@ def format_journey(data,trg_i):
 
             # "経由地" で区切る必要がある場合
             if point_name == "経由地":
+                point_name = spot_title_ls[spot_i]
+                spot_i += 1
                 # 現在の旅程をリストに追加し、新しい旅程を開始
                 if journey:  # journeyが空でない場合のみ追加
                     journeys.append(journey.strip())  # 最後の改行を削除
@@ -99,7 +102,8 @@ def format_journey(data,trg_i):
 
             # 前のポイントから現在のポイントまでの移動を記録し、改行コードを追加
             if point_name != prev_point:
-                journey += f"{prev_point}から{point_name}へ {move_type},{line_name}で移動する．時間は{time}分\n"
+                journey += f"{prev_point} -> {move_type(line_name)} -> {point_name}\n"
+                print(journey)
                 prev_point = point_name  # 現在のポイントを更新
                 total_move_time_minutes += time #時間を計測
 
