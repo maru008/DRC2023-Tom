@@ -51,5 +51,4 @@ while True:
                 mongo_db.update_data(unique_id, decoded_json)
             except json.decoder.JSONDecodeError as e:
                 print(f"JSON Decode Error: {e}")
-            finally:
-                connection.close()
+                pass

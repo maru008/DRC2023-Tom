@@ -10,6 +10,6 @@ class SocketConnection:
         s.connect((self.host, self.port))
         encoded_data = data.encode('utf-8', errors='ignore')
         s.sendall(encoded_data)
-        response = s.recv(1024).decode('utf-8')
+        # response = s.recv(1024).decode('utf-8')
         s.close() # 送信後にソケットを閉じる
-        return response 
+        # return response 
