@@ -393,7 +393,7 @@ if not check_time_exceeded(start_time,threshold_minutes=10):
     speech_gen.speech_generate("それではどの２つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
 else:
     motion_gen.play_motion("greeting_deep")
-    speech_gen.speech_generate("申し訳ありません，お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
+    speech_gen.speech_generate("申し訳ありません、お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
@@ -417,7 +417,7 @@ while True:
     user_input_text_ls.append(user_input_text)
     response_text = RobotNLG.GPT4(user_input_text,choice_two_spot_prompt,[])
     trg2spotid = eval(response_text)
-    print("得られたIDのリスト：",trg2spotid)
+    print("得られたIDのリスト:",trg2spotid)
     if len(trg2spotid) == 2:
         break
     elif len(trg2spotid) <= 1:
@@ -453,12 +453,13 @@ with open(route_search_prompt_path, 'r', encoding='utf-8') as f:
 def async_speach_spot(trg2spotTitle):
     speach_t = f"ありがとうございます。お客様が行きたいスポットは{trg2spotTitle[0]}と{trg2spotTitle[1]}ですね。"
     speech_gen.speech_generate(speach_t)
-    speach_t = "それではこの店から出発し、公共交通機関で観光地を巡り、帰ってくるプランを検索いたします。少しお待ちください。"
+    speach_t = "それでは明日の8時にこの店から出発し、公共交通機関で観光地を巡り、いちにちで帰ってくるプランを検索いたします。少しお待ちください。"
     speech_gen.speech_generate(speach_t)
 
 def async_search_route():
     global journey_ls
-    journey_ls = NAVITME_serach.get_route_text(0)#この0は候補の番目
+    global total_move_time_minutes
+    journey_ls,total_move_time_minutes = NAVITME_serach.get_route_text(0)#この0は候補の番目
     print("NAVITIME> Serach route done!")
 
 #並列処理--------------------------------------------------------------------------------------------
@@ -486,22 +487,20 @@ speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yie
 speech_thread.start()
 stop_generation = False
 async_speech_generate()
+
+speech_thread.join()
+print("total_move_time_minutes:",total_move_time_minutes)
+hours = total_move_time_minutes // 60  # 分を60で割った商が時間数
+minutes = total_move_time_minutes % 60  # 分を60で割った余りが分数
+
+print(f'移動の合計時間は{hours}時間{minutes}分')
 # yield_speech_message(RobotNLG.yield_GPT4_message, str(route_info_json), routeInfo_prompt_text, past_messages)
+speech_gen.speech_generate(f'移動の合計時間は{hours}時間{minutes}分なので，それぞれの観光地に十分滞在することができますよ！楽しんでください！')
 
-
-## 対話ログを追加--------------------------------------------------------------------------------------------
-# user_text_json = {
-#     "User_text":user_input_text_ls
-# }
-# system_text_json = {
-#     "System_text":system_output_text_ls
-# }
-# Dialog_mongodb.update_data(unique_id,user_text_json)
-# Dialog_mongodb.update_data(unique_id,system_text_json)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 根拠に基づく推薦事後対話 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-speech_gen.speech_generate("以上が今回おすすめする観光プランになります。何か質問あれば何でも聞いてください！")
+speech_gen.speech_generate("以上が今回おすすめする観光プランになります。何か質問あれば何でもお答えできます！いかがでしょうか")
 reco_after_prompt = f"""
     あなたは旅行代理店の接客のプロです。
     この度のお客様は京都市内の観光を目的としてご来店されました。
