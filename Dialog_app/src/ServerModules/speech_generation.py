@@ -66,6 +66,7 @@ class SpeechGeneration(Base):
 
     def speech_generate(self, sentence, volume=""):
         print("{}:: Play one sentence.".format(self.__class__.__name__))
+        print("System>",sentence)
         # 1. 送信データ作成
         ssml_text = sentence
         for head, tail in self.ssml_option[::-1]:
