@@ -102,7 +102,7 @@ def format_journey(data,trg_i,spot_title_ls):
 
             # 前のポイントから現在のポイントまでの移動を記録し、改行コードを追加
             if point_name != prev_point:
-                journey += f"{prev_point} -> {move_type(line_name)} -> {point_name}\n"
+                journey += f"{prev_point} -> {move_type}({line_name}) -> {point_name}\n"
                 print(journey)
                 prev_point = point_name  # 現在のポイントを更新
                 total_move_time_minutes += time #時間を計測
