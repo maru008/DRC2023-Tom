@@ -21,11 +21,11 @@ def Judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_t
     # 経過時間を計算
     elapsed_time = (current_time - start_time).seconds
     
-    if elapsed_time > 3 * 60:#五分経ったら強制終了
+    if elapsed_time > 3 * 60: #3分経ったら強制終了
         return True
     
     #対話が５ターン続いていて，観光地のカテゴリが1つ以上で,その中に4つ以上データがあればBreak
-    if Dialog_turn_num > 5 and len(resulting_sight_id_mtx) >= 1 and len(resulting_sight_id_mtx[0]) >= 4:
+    if len(resulting_sight_id_mtx) >= 2 and len(resulting_sight_id_mtx[0]) >= 4:
         return True
     
     return False 
