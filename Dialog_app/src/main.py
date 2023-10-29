@@ -70,12 +70,12 @@ Sightseeing_mongodb = SightseeingDBHandler("Sightseeing_Spot_DB")
 speech_gen = SpeechGeneration(DIALOG_MODE,ADD_HESITATION,IP,config.get("Server_Info","SpeechGenerator_port"))
 face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
-# voice_recog = VoiceRecognition(DIALOG_MODE,"192.168.0.4",config.get("Server_Info","SpeechRecognition_port"),motion_gen)
-voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"),motion_gen)
-sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
-# sight_view = SightViewTCPServer(DIALOG_MODE,"192.168.0.5",config.get("Server_Info","SiteViewer_port"))#名古屋
-TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
-# TCP_server = ConversationSignalHandler(DIALOG_MODE,"192.168.0.3",8001)#名古屋
+voice_recog = VoiceRecognition(DIALOG_MODE,"192.168.0.4",config.get("Server_Info","SpeechRecognition_port"),motion_gen)#名古屋
+# voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"),motion_gen)
+# sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
+sight_view = SightViewTCPServer(DIALOG_MODE,"192.168.0.5",config.get("Server_Info","SiteViewer_port"))#名古屋
+# TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
+TCP_server = ConversationSignalHandler(DIALOG_MODE,"192.168.0.3",8001)#名古屋
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -330,7 +330,6 @@ def async_generate_spot_desc(sightID_ls,sightTitle_ls):
     for i,sightID_i in enumerate(sightID_ls):
         print(f"creating {sightID_i} desc")
         viwe_spot_text = head_text_ls[i]  + sightTitle_ls[i] + "の写真と地図です。"
-        time.sleep(0.1)
         spot_desc_text_ls.append(viwe_spot_text)
         now_screen_state.append(viwe_spot_text)
         desc_i = Sightseeing_mongodb.get_summary_by_sight_id(sightID_i)
@@ -361,8 +360,6 @@ for desc_i in spot_desc_text_ls:
     speech_gen.speech_generate(desc_i)
     system_output_text_ls.append(desc_i)
     check_time_exceeded(start_time)
-    
-spot_desc_text_json = json.dumps(dict(zip(sightTitle_ls,sightDesc_ls)))
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ４つの観光地について質疑応答を受ける +++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -371,9 +368,9 @@ desc_4spot_prompt = f"""
     この度のお客様は京都市内の観光を目的としてご来店されました。
     
     今、お客様は4つの観光地で悩んでいます。
-    4つのスポットは以下のJSON形式で書かれており、観光地とその説明が書かれています。
-    {spot_desc_text_json}
-    お客様がこれらの観光地について質問をしようとしているので，上のデータを参考に適切に対応してください．
+    4つのスポットは{"、".join(sightTitle_ls)}であり、その説明は以下です。
+    {spot_desc_text_ls}
+    お客様がこれらの観光地について質問をしようとしているので，上の説明のデータを参考に適切に対応してください．
     ただし、観光地は上の4つ以外を絶対に説明してはいけません。
     
     箇条書きや掛け合いの文書など発話としておかしな出力はしないでください．
@@ -381,6 +378,8 @@ desc_4spot_prompt = f"""
     決して，「また」と出力しないようにしてください．
     決して箇条書きによる出力はしてはいけません．
     決してあなた自身で問答をする形式の出力をはやめてください．
+    
+    それでは接客を開始します。
 """
 
 def async_judge_any_question(user_input_text):
@@ -397,7 +396,7 @@ def async_judge_any_question(user_input_text):
     else:
         judge_any_question = False
 
-next_step_break_minutes = 8
+next_step_break_minutes = 7
 if not check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes):
     speach_t = "以上が4つの観光地の説明です。少し説明が長かったですね。何か質問あればなんでもお答えできますよ。いかがでしょうか"
     speech_gen.speech_generate(speach_t)
