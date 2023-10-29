@@ -56,7 +56,8 @@ def change_subject(now_json):
 #         return False, random.sample(spot_id_ls,4)  
 def select4spot(matrix):
     # 行列を1次元に変換して重複を削除
-    unique_elements = list(set(np.array(matrix).flatten()))
+    flattened = [item for sublist in matrix for item in sublist]
+    unique_elements = list(set(flattened))
     # unique_elementsが4より少ない場合
     if len(unique_elements) < 4:
         success = False

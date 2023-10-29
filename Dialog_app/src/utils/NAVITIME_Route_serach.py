@@ -98,12 +98,14 @@ def format_journey(data,trg_i,spot_title_ls):
                 # 現在の旅程をリストに追加し、新しい旅程を開始
                 if journey:  # journeyが空でない場合のみ追加
                     journeys.append(journey.strip())  # 最後の改行を削除
+                print(journey)
+                print("-"*20)
                 journey = ""
+                
 
             # 前のポイントから現在のポイントまでの移動を記録し、改行コードを追加
             if point_name != prev_point:
-                journey += f"{prev_point} -> {move_type}({line_name}) -> {point_name}\n"
-                print(journey)
+                journey += f"{prev_point} -> ({line_name}) -> {point_name}\n"
                 prev_point = point_name  # 現在のポイントを更新
                 total_move_time_minutes += time #時間を計測
 

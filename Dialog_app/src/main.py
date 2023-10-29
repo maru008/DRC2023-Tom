@@ -27,7 +27,7 @@ from DialogModules.NLGModule import NLG
 from database.mongodb_tools_Dialog import MongoDB,check_db_exists
 from database.mongodb_tools_Sightseeing import SightseeingDBHandler,generate_combinations
 
-
+#予選用設定
 USE_GPT_API = True
 ADD_HESITATION = False
 #===================================================================================================
@@ -118,7 +118,6 @@ def yield_speech_message(generator_function, user_input_text, ChatGPT_prompt_tex
 # +++++++++++++++++++++++++++++++ 非同期処理用関数 +++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 
-
 # def async_speech_generate(user_input_text,ChatGPT_prompt_text,user_input_log):
 #     global response_text
 #     response_text = yield_speech_message(RobotNLG.yield_GPT4_message, user_input_text, ChatGPT_prompt_text, user_input_log)
@@ -145,7 +144,7 @@ def async_speech_generate():
 user_input_text_ls = []
 system_output_text_ls = []
 resulting_sight_id_mtx = []
-
+all_Dialog_ls = []
 #TCP開始サーバ接続------------------------------------------------------------------------------------
 #最初の時間を記録
 
@@ -165,7 +164,7 @@ speach_t = """こんにちは！旅行代理店ロボットのあいです。
                 私との会話でお客様に最適な観光地を見つけるお手伝いをします！
                 何か旅行で体験したいことなどを教えて下さい。
                 決まっていなくても大丈夫です。"""
-speach_t = ""
+# speach_t = ""
 speech_gen.speech_generate(speach_t)
 system_output_text_ls.append(speach_t)
 
@@ -370,8 +369,10 @@ desc_4spot_prompt = f"""
     今、お客様は4つの観光地で悩んでいます。
     4つのスポットは{"、".join(sightTitle_ls)}であり、その説明は以下です。
     {spot_desc_text_ls}
-    お客様がこれらの観光地について質問をしようとしているので，上の説明のデータを参考に適切に対応してください．
-    ただし、観光地は上の4つ以外を絶対に説明してはいけません。
+    お客様がこれらの観光地について質問をしようとしているので，上の説明を参考に適切に対応してください．
+    ただし，これらの観光地を正しく発話できるわけではないので，それを加味して理解して．
+    入力はこれらの観光地に関する質問のみです。
+
     
     箇条書きや掛け合いの文書など発話としておかしな出力はしないでください．
     出力する文の長さは短くして、文章も2から3文程度で相手を圧倒しないようにしてください。
@@ -396,7 +397,7 @@ def async_judge_any_question(user_input_text):
     else:
         judge_any_question = False
 
-next_step_break_minutes = 7
+next_step_break_minutes = 6.5
 if not check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes):
     speach_t = "以上が4つの観光地の説明です。少し説明が長かったですね。何か質問あればなんでもお答えできますよ。いかがでしょうか"
     speech_gen.speech_generate(speach_t)
@@ -427,7 +428,7 @@ if not check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes)
             print(response_text)
             user_input_log_desc4spot.append({"role": "assistant", "content":response_text})
     
-    speech_gen.speech_generate("それではどの２つの観光地に行くかを選んでいただきたいです。")
+    speech_gen.speech_generate("それではどの2つの観光地に行くかを選んでいただきたいです。")
     motion_gen.play_motion("greeting_deep")
     speech_gen.speech_generate("よろしくお願いします。")
     
@@ -548,6 +549,8 @@ reco_after_prompt = f"""
     出発地は{start_point} で、到着地は、{end_point}です。
     そしてこれらの観光地に以下の道順でいくことも決まっています。
     {journey_ls}
+    移動時間は{hours}時間{minutes}分です。
+    
     これらの情報をもとに、今からお客様からの質疑応答があるので適切に回答し、接客を行ってください。
     質問がない場合でも，何か別の話題を振って会話を続けていってください．
     
@@ -587,7 +590,7 @@ motion_gen.play_motion("greeting_deep")
 speech_gen.speech_generate("ありがとうございました。")
 
 # NLUサーバとの接続終了
-socket_conn_NLU.send_data("終了")
+socket_conn_NLU.send_data(str([unique_id,"終了"]))
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 会話終了後の処理 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
