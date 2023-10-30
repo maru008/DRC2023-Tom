@@ -1,16 +1,21 @@
 # 旅行代理店対話ロボットシステム (in DRC2023)
 in DRC2023, Team Tom
+# 概要
 
+# 提案システム
+非同期的に対話進行を行う Dual Large Language Model for Dialog system アーキテクチャ
+
+# 実行
 ## 環境
 - Python
 - Docker
-- Unix系(mac or Ubuntu)
   
 ### 環境設定
 対話メインプログラムはpythonを用います．
-仮想環境を作成することを推奨．
+仮想環境を作成
+
 ```
-python -m venv .venv #.venvにすることでgitにコミットされない
+python -m venv .venv 
 ```
 
 仮想環境に入ってライブラリをインストール
@@ -18,18 +23,19 @@ python -m venv .venv #.venvにすることでgitにコミットされない
 source .venv/bin/activate
 pip install -r Dialog_app/requirements.txt
 ```
-または
+Windows系であれば以下
 ```
 .venv\Scripts\activate
 python -m pip install -r Dialog_app/requirements.txt
 ```
-対話プログラム（start_dialog.sh）は以降この環境で実行．
+
 ---
 ## 設定項目
 APIキーやサーバホストを各自の設定ファイルに作成する．APIは以下が必要です．
 - OpenAI
 - RURUBU
 - Google
+- NAVITIME
   
 以下のパスのようにconfig.iniファイルを作成する．
 - config.ini
@@ -41,6 +47,7 @@ APIキーやサーバホストを各自の設定ファイルに作成する．AP
 OpenAI = *************
 RURUBU = *************
 GOOGLE = *************
+NAVITIME = *************
 
 [Server_Info]
 Server_ip = 172.22.137.149
@@ -53,13 +60,9 @@ SiteViewer_port = 25000
 ```
 
 ---
-## 前準備
+## 観光地データベースの準備
 地理データを準備する必要があります．
 具体的には以下のデータ処理を行います．
-
-```
-python CityGraph_app/src/data_preparation.py
-```
 
 ---
 ## 実行方法
@@ -73,4 +76,5 @@ Windows環境
 start_dialog.bat
 ```
 
-コマンド対話モードを使用しますか？(y/n)を聞かれるので，会話だけをしたい時はy．サーバ接続をして試したい時はnを入力する．
+コマンド対話モードを使用しますか？(y/n)を聞かれるので，会話だけをしたい時はy．
+対話関連のサーバに接続をして試したい時はnを入力する．
