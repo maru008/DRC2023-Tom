@@ -1,7 +1,14 @@
 import random
+import pandas as pd
+import copy
+import numpy as np
+
+spot_all = pd.read_csv("../Sightseeing_Spot_data/data/output_data/value_count.csv")
+
+spot_id_ls = spot_all[spot_all["Key"] == "SightID"]["Value"].to_list()
+spot_id_ls = [int(spot_id_i) for spot_id_i in spot_id_ls]
 
 all_LGenre = ['見る', '遊ぶ', '温泉地']
-
 change_subject_text = {
     '見る':'ところで何かみたい観光地などありますでしょうか',
     '食べる':'ところで，何か食べたいものなどありますか？京都にはいろいろ名所がありますよ',
@@ -18,33 +25,51 @@ def change_subject(now_json):
     rtn_text = change_subject_text[selected_LGenre]
     return rtn_text
 
+# def select4spot(data):
+#     try:
+#         if len(data) == 0: #配列の長さが0の時は全てからランダムで
+#             spot4_ls = random.sample(spot_id_ls,4)
+#             return False, spot4_ls
+        
+#         if len(data) == 1: #1行のみ存在する場合
+#             trg_spot_ls = data[0]
+#             if len(trg_spot_ls) < 4: 
+#                 spot_num = len(trg_spot_ls)
+#                 nokori_spot = 4 - spot_num
+#                 return_spot_ls = copy.deepcopy(trg_spot_ls)
+#                 return_spot_ls.extend(random.sample(spot_id_ls, nokori_spot))
+#                 return True, return_spot_ls
+#             else:
+#                 return True, random.sample(trg_spot_ls, 4)
+        
+#         else: #2行以上存在する場合
+#             selected_rows = random.sample(data, min(4, len(data))) # 4行もしくは存在する行数だけランダムに選択
+#             return_spot_ls = []
+#             for row in selected_rows:
+#                 return_spot_ls.append(random.choice(row))
+#                 if len(return_spot_ls) == 4:
+#                     break
+#             while len(return_spot_ls) < 4: # 選択された要素が4未満の場合、残りを埋める
+#                 return_spot_ls.append(random.choice(random.choice(data)))
+#             return True, return_spot_ls
+#     except:# すべての実行パスで値を返すようにするためのデフォルト返り値
+#         return False, random.sample(spot_id_ls,4)  
+def select4spot(matrix):
+    # 行列を1次元に変換して重複を削除
+    flattened = [item for sublist in matrix for item in sublist]
+    unique_elements = list(set(flattened))
+    # unique_elementsが4より少ない場合
+    if len(unique_elements) < 4:
+        success = False
+        
+        available_elements = [x for x in spot_id_ls if x not in unique_elements]
+        diff = 4 - len(unique_elements)
+        additional_elements = random.sample(available_elements, diff)
+        result = unique_elements + additional_elements
+    else:
+        success = True
+        # 4つ以上の場合は、結合した行列から4つランダムに選ぶ
+        result = random.sample(unique_elements, 4)
+    return success,result
 
-def select4spot(data):
-    # 配列が空か、全ての要素が3つ以下の場合
-    if not data or sum(len(row) for row in data) < 4:
-        return None
 
-    selected_elements = []
-    flat_list = [item for sublist in data for item in sublist]
-
-    # 配列の行が2つ以上ある場合、それぞれの行から要素を選ぶ
-    if len(data) > 1:
-        for row in data:
-            unique_row = [item for item in row if item not in selected_elements]
-            if unique_row:  # 重複しない要素があれば
-                choice = random.choice(unique_row)
-                selected_elements.append(choice)
-                flat_list.remove(choice)  # 選択された要素をflat_listから除外
-            if len(selected_elements) == 4:  # 4つ選択できたら終了
-                return selected_elements
-
-        # 選ばれた要素が4つに達していない場合、必要な数だけ追加で選ぶ
-        while len(selected_elements) < 4 and flat_list:
-            choice = random.choice(flat_list)
-            if choice not in selected_elements:  # 選択した要素が重複しないことを確認
-                selected_elements.append(choice)
-                flat_list.remove(choice)  # 選択された要素をflat_listから除外
-
-            # 4つ選べたかどうかを確認
-        if len(selected_elements) < 4:
-            return None

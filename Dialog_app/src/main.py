@@ -11,7 +11,7 @@ import threading
 from utils.config_reader import read_config
 from utils.general_tool import SectionPrint,check_time_exceeded
 from utils.TCPserver import SocketConnection
-from Dialog_app.src.utils.NAVITIME_Route_serach import NAVITME
+from utils.NAVITIME_Route_serach import NAVITME
 from utils.determine_shot import change_subject,select4spot
 from utils.judge_break import Judge_roop_break,Judge_change_subject
 
@@ -27,7 +27,7 @@ from DialogModules.NLGModule import NLG
 from database.mongodb_tools_Dialog import MongoDB,check_db_exists
 from database.mongodb_tools_Sightseeing import SightseeingDBHandler,generate_combinations
 
-
+#予選用設定
 USE_GPT_API = True
 ADD_HESITATION = False
 #===================================================================================================
@@ -46,12 +46,12 @@ else:
     sys.exit('正しく入力してください')
 #　システムチェックでAPIを使わないのためのコマンド
 
-console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
-if console_input == "n":
-    USE_GPT_API = False
-console_input = input("いい淀みを付与しますか？:(y/n)")
-if console_input == "y":
-    ADD_HESITATION = True
+# console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
+# if console_input == "n":
+#     USE_GPT_API = False
+# console_input = input("いい淀みを付与しますか？:(y/n)")
+# if console_input == "y":
+#     ADD_HESITATION = True
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ データベース準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -68,15 +68,18 @@ Sightseeing_mongodb = SightseeingDBHandler("Sightseeing_Spot_DB")
 # +++++++++++++++++++++++++++++++ ロボットサーバ準備 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 speech_gen = SpeechGeneration(DIALOG_MODE,ADD_HESITATION,IP,config.get("Server_Info","SpeechGenerator_port"))
-voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"))
 face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
-sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
-TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
+voice_recog = VoiceRecognition(DIALOG_MODE,"192.168.0.4",config.get("Server_Info","SpeechRecognition_port"),motion_gen)#名古屋
+# voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"),motion_gen)
+# sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
+sight_view = SightViewTCPServer(DIALOG_MODE,"192.168.0.5",config.get("Server_Info","SiteViewer_port"))#名古屋
+# TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
+TCP_server = ConversationSignalHandler(DIALOG_MODE,"192.168.0.3",8001)#名古屋
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-socket_conn = SocketConnection('localhost', 12345)
+socket_conn_NLU = SocketConnection('localhost', 12345)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ フロントLLM準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -102,7 +105,7 @@ def yield_speech_message(generator_function, user_input_text, ChatGPT_prompt_tex
     sentence_count = 0
     for talk in generator_function(user_input_text, ChatGPT_prompt_text, past_messages=user_input_log):
         speach_t += talk
-        if "。" in talk or "！" in talk or "？" in talk:
+        if "。" in talk or "！" in talk or "？" in talk or "．" in talk:
             sentence_count +=1
             if sentence_count == 1 and len(speach_t) < 20:#短い一文ならpass
                 pass
@@ -115,13 +118,13 @@ def yield_speech_message(generator_function, user_input_text, ChatGPT_prompt_tex
 # +++++++++++++++++++++++++++++++ 非同期処理用関数 +++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 
-
 # def async_speech_generate(user_input_text,ChatGPT_prompt_text,user_input_log):
 #     global response_text
 #     response_text = yield_speech_message(RobotNLG.yield_GPT4_message, user_input_text, ChatGPT_prompt_text, user_input_log)
 
 def async_send_data(data):
-    socket_conn.send_data(data)
+    socket_conn_NLU.send_data(data)
+    print("finish thread:  async_send_data")
 
 def async_speech_generate():
     global response_queue
@@ -130,7 +133,9 @@ def async_speech_generate():
         if not response_queue.empty():
             response_text = response_queue.get()
             speech_gen.speech_generate(response_text)
+            print("System>",response_text)
             # time.sleep(1)
+    print("finish thread:  async_speech_generate ")
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 対話開始 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -139,7 +144,7 @@ def async_speech_generate():
 user_input_text_ls = []
 system_output_text_ls = []
 resulting_sight_id_mtx = []
-
+all_Dialog_ls = []
 #TCP開始サーバ接続------------------------------------------------------------------------------------
 #最初の時間を記録
 
@@ -154,9 +159,20 @@ SectionPrint("対話開始")
 start_time = datetime.datetime.now()
 #お辞儀
 motion_gen.play_motion("greeting_deep")
-speach_t = """こんにちは！旅行代理店ロボットのしょうこです。今回お客様は京都への旅行を考えていると聞きました。私との会話でお客様に最適な観光地を見つけるお手伝いをします！何か旅行で体験したいことなどを教えて下さい。よろしくお願いします。"""
+speach_t = """こんにちは！旅行代理店ロボットのあいです。
+                今回お客様は京都への旅行を考えていると聞きました。
+                私との会話でお客様に最適な観光地を見つけるお手伝いをします！
+                何か旅行で体験したいことなどを教えて下さい。
+                決まっていなくても大丈夫です。"""
+# speach_t = ""
 speech_gen.speech_generate(speach_t)
 system_output_text_ls.append(speach_t)
+
+motion_gen.play_motion("greeting_deep")
+speech_gen.speech_generate("よろしくお願いします。")
+#自分の声を受け取らない
+# voice_recog.start_listen()
+# voice_recog.stop_listen()
 
 user_input_log_firstContact = [{"role": "system", "content":ChatGPT_prompt_text}]
 
@@ -172,28 +188,48 @@ while True:
     Judge_break_bool = Judge_roop_break(resulting_sight_id_mtx,Dialog_turn_num,start_time,current_time)
     #話題変換ジャッジ(Judge_change_subject_boolがtureなら話題を変換する)
     Judge_change_subject_bool = Judge_change_subject(resulting_sight_id_mtx,Dialog_turn_num)
-    print(f"終了:{Judge_break_bool}, 話題変更:{Judge_change_subject_bool}")
+    print(f"ループ終了:{Judge_break_bool}, 話題変更:{Judge_change_subject_bool}")
     # 発話認識
-    motion_gen.play_motion("nod_slight")
-    user_input_text = voice_recog.recognize()
-    motion_gen.play_motion("nod_slight")
-    user_input_log_firstContact.append({"role": "user", "content":user_input_text})
     
+    user_input_text = voice_recog.recognize_speach()
+    
+    # voice_recog.listen_once()
+    # while True:
+    #     if not voice_recog.received_stack:
+    #         time.sleep(0.1)
+    #         continue
+    #     user_input_json = voice_recog.received_stack.pop(0)
+    #     if user_input_json["type"] in ["silent", "final", "failed"]:
+    #         break
+    # user_input_text = user_input_json["user_utterance"]
+    user_input_log_firstContact.append({"role": "user", "content":user_input_text})
+    if Judge_change_subject_bool:
+        user_input_log_firstContact = [{"role": "system", "content":ChatGPT_prompt_text}]
+        user_input_log_firstContact.append({"role": "user", "content":user_input_text})
+        add_user_input_text = "\n<change>"
+    elif Judge_break_bool:
+        add_user_input_text = "\n<finish>"
+    else:
+        add_user_input_text = "\n<keep>"
     #===================================================================================================
     # 非同期処理開始
     response_queue = queue.Queue()
-    speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, user_input_text, ChatGPT_prompt_text, user_input_log_firstContact))
+    speech_thread = threading.Thread(target=yield_speech_message, 
+                                     args=(RobotNLG.yield_GPT4_message, 
+                                           user_input_text + add_user_input_text, 
+                                           ChatGPT_prompt_text, 
+                                           user_input_log_firstContact))
     send_data_thread = threading.Thread(target=async_send_data, args=(str([unique_id, user_input_text]),))#NLUサーバに文字列を送る（DBへの追加は向こう側）
     
     speech_thread.start()
     send_data_thread.start()
-    
+
     stop_generation = False
     async_speech_generate()
     
     speech_thread.join()
     send_data_thread.join()
-    
+    print("join done")
     ## ユーザとロボットのテキスト追加
     user_input_text_ls.append(user_input_text)
     system_output_text_ls.append(response_text)
@@ -215,7 +251,7 @@ while True:
         if str(combination) not in already_serach_json:
             condition_json = json.dumps(combination)
             sight_ids = Sightseeing_mongodb.get_sight_ids_by_multiple_conditions(condition_json)
-            if len(sight_ids) >= 2 and len(sight_ids) < 100:
+            if len(sight_ids) >= 1 and len(sight_ids) < 100:
                 print("対象クエリ:",combination)
                 print("結果観光地数:",len(sight_ids))
                 resulting_sight_id_mtx.append(sight_ids)
@@ -226,33 +262,25 @@ while True:
     # 次のフェーズへ行くかどうかの判定
     if Judge_break_bool:
         break
-    else:
-        # 話題変換をするかどうかの判定
-        if Judge_change_subject_bool:
-            response_text = change_subject(data_as_json)
-            speech_gen.speech_generate(response_text)
-            #chatgptのログを初期化（最大トークン数エラーを回避するため）
-            user_input_log_firstContact = [{"role": "system", "content":ChatGPT_prompt_text}]
-            user_input_log_firstContact.append({"role": "assistant", "content":response_text})
+    # else:
+    #     # 話題変換をするかどうかの判定
+    #     if Judge_change_subject_bool:
+    #         response_text = change_subject(data_as_json)
+    #         speech_gen.speech_generate(response_text)
+    #         #chatgptのログを初期化（最大トークン数エラーを回避するため）
     # 時間表示
     print("---------------------------------")
     check_time_exceeded(start_time)
-
+result_user_json = data_as_json
+SectionPrint("4つの観光地推薦・説明")
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-# 配列から4つを選ぶ----------------------------------------------------------------------------------------
-Select4_Bool = False
-print("select 4 spot...",end="")
-sightID_ls = select4spot(resulting_sight_id_mtx)
-print("selected->",sightID_ls)
 
-if sightID_ls is None:
-    sightID_ls = [80026003,80026022,80025993,80025990] #得られなかったら仮の4つ選ぶ
-    result_user_json ={}
-else:
-    result_user_json = data_as_json
-    Select4_Bool = True
+# 配列から4つを選ぶ----------------------------------------------------------------------------------------
+print("select 4 spot...",end="")
+Select4_Bool,sightID_ls = select4spot(resulting_sight_id_mtx)
+print("selected->",sightID_ls)
 
 sightTitle_ls = [Sightseeing_mongodb.get_title_by_sight_id(sightID_i) for sightID_i in sightID_ls]
 print("選ばれた観光地リスト: ",sightTitle_ls)
@@ -263,16 +291,24 @@ print("選ばれた観光地リスト: ",sightTitle_ls)
 spot_desc_text_ls = []
 now_screen_state = []
 def async_speach_json_result(Select4_Bool,sightID_ls):
-    speach_t ="ありがとうございます。今回の旅行がどういうものか、そしてあなたがどんな人かわかりました！それではいくつか観光地を検索いたします。少しお待ちください。"
+    speach_t ="ありがとうございます。今回の旅行がどういうものか、そしてあなたがどんな人かわかりました！"
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
     if not Select4_Bool:
-        speach_t = "申し訳ありません。お客様に合致した観光地を見つけることができませんでした。今回は京都で代表的な観光地を上げさせていただきます。"
+        speach_t = """ただ，申し訳ありません。
+                      私の実力不足でお客様に合致した観光地を見つけることができませんでした。
+                      私ももっと学ばなければいけません。
+                      今回は京都市内でおすすめの観光地をいくつかピックアップさせていただきます。
+                      どこも魅力的なので安心してください。"""
+        result_user_json = {}
         speech_gen.speech_generate(speach_t)
         system_output_text_ls.append(speach_t)
+    else:
+        speach_t ="それではいくつか観光地を検索いたします。少しお待ちください。"
+        speech_gen.speech_generate(speach_t)
     view_spot_json = Sightseeing_mongodb.create_send_json(sightID_ls)
     sight_view.send_data(view_spot_json)
-    speach_t = "こちらの画面に、今回お客様に推薦する4つの観光地を表示しています。これら4つの観光地から2つを選んでいただきます。"
+    speach_t = "こちらの画面に、今回お客様に推薦する4つの観光地を表示しています。これら4つの観光地から2つを選んでいただきます。どちらもあらたな発見ができるような素晴らしい観光地ですよ。"
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
 # ----------------------------------------------------------------------------------------------
@@ -292,7 +328,7 @@ def async_generate_spot_desc(sightID_ls,sightTitle_ls):
     head_text_ls = ["まず左上は、","次に右上は、","その左下は、","最後に右下は、"]
     for i,sightID_i in enumerate(sightID_ls):
         print(f"creating {sightID_i} desc")
-        viwe_spot_text = head_text_ls[i]  + sightTitle_ls[i] + "の写真と地図です。ご覧ください。"
+        viwe_spot_text = head_text_ls[i]  + sightTitle_ls[i] + "の写真と地図です。"
         spot_desc_text_ls.append(viwe_spot_text)
         now_screen_state.append(viwe_spot_text)
         desc_i = Sightseeing_mongodb.get_summary_by_sight_id(sightID_i)
@@ -323,8 +359,6 @@ for desc_i in spot_desc_text_ls:
     speech_gen.speech_generate(desc_i)
     system_output_text_ls.append(desc_i)
     check_time_exceeded(start_time)
-    
-spot_desc_text_json = json.dumps(dict(zip(sightTitle_ls,sightDesc_ls)))
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ４つの観光地について質疑応答を受ける +++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -333,56 +367,81 @@ desc_4spot_prompt = f"""
     この度のお客様は京都市内の観光を目的としてご来店されました。
     
     今、お客様は4つの観光地で悩んでいます。
-    4つのスポットは以下のJSON形式で書かれており，観光地とその説明が書かれています．
-    {spot_desc_text_json}
-    お客様がこれらの観光地について質問をしようとしているので，上のデータ基づいて適切に対応してください．
+    4つのスポットは{"、".join(sightTitle_ls)}であり、その説明は以下です。
+    {spot_desc_text_ls}
+    お客様がこれらの観光地について質問をしようとしているので，上の説明を参考に適切に対応してください．
+    ただし，これらの観光地を正しく発話できるわけではないので，それを加味して理解して．
+    入力はこれらの観光地に関する質問のみです。
+
     
     箇条書きや掛け合いの文書など発話としておかしな出力はしないでください．
-    出力する文の長さは短くして，文章も2から3文程度で相手を圧倒しないようにしてください。
+    出力する文の長さは短くして、文章も2から3文程度で相手を圧倒しないようにしてください。
     決して，「また」と出力しないようにしてください．
     決して箇条書きによる出力はしてはいけません．
     決してあなた自身で問答をする形式の出力をはやめてください．
-
     
-    もしお客さんが質問がないと発話していると判断したら最後に $break$ と出力してください．
-    質問がないことが話される可能性があるので，その時は必ず$break$と出力してください
+    それでは接客を開始します。
 """
 
-def contains_break_string(s):
-    """
-    質問がないかどうかを判定する間数
-    """
-    return bool(re.search(r'\$break\$', s))
-if not check_time_exceeded(start_time,threshold_minutes=7):
-    speach_t = "以上が4つの観光地の説明です。何か質問あればなんでもお答えします．いかがでしょうか"
+def async_judge_any_question(user_input_text):
+    global judge_any_question
+    judge_any_question_prompt = """
+            次に旅行代理店にきたお客の質問が入力されます．
+            質問がありそうであれば False という文字列を出力して．
+            また質問がなく疑問を解決したようであれば True という文字列を返して．
+            出力は必ず True もしくは False のみにしてください．
+            """
+    res = str(RobotNLG.GPT4(user_input_text,judge_any_question_prompt,[]))
+    if "True" in res:
+        judge_any_question = True
+    else:
+        judge_any_question = False
+
+next_step_break_minutes = 6.5
+if not check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes):
+    speach_t = "以上が4つの観光地の説明です。少し説明が長かったですね。何か質問あればなんでもお答えできますよ。いかがでしょうか"
     speech_gen.speech_generate(speach_t)
 
     user_input_log_desc4spot = []
     while True:
-        user_input_text = voice_recog.recognize()
-        user_input_log_desc4spot.append({"role": "user", "content":user_input_text})
-        if check_time_exceeded(start_time,threshold_minutes=7):
-            speach_t = "すみません，お時間が迫っているようなので先に進みます．"
+        if check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes):
+            speach_t = "申し訳ありません、お時間が迫っているようなので先に進みます。"
             speech_gen.speech_generate(speach_t)
             break
         else:
+            user_input_text = voice_recog.recognize_speach()
+            user_input_log_desc4spot.append({"role": "user", "content":user_input_text})
+            
             response_queue = queue.Queue()
             speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, user_input_text, desc_4spot_prompt, user_input_log_desc4spot))
+            judge_any_question_thread = threading.Thread(target=async_judge_any_question,args=(user_input_text,))
             speech_thread.start()
+            judge_any_question_thread.start()
             stop_generation = False
             async_speech_generate()
-            # if contains_break_string(response_text):
-            #     break
+            
+            speech_thread.join()
+            judge_any_question_thread.join()
+            
+            if judge_any_question:
+                speech_gen.speech_generate("質問は解消されたようですね。")
+                break
             print(response_text)
             user_input_log_desc4spot.append({"role": "assistant", "content":response_text})
-    speech_gen.speech_generate("それではどの２つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
-else:
-    speech_gen.speech_generate("すみません，お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。よろしくお願いします。")
     
+    speech_gen.speech_generate("それではどの2つの観光地に行くかを選んでいただきたいです。読み方が難しければ、上二つのように言言っていただいても大丈夫です．")
+    motion_gen.play_motion("greeting_deep")
+    speech_gen.speech_generate("よろしくお願いします。")
+    
+else:
+    speech_gen.speech_generate("申し訳ありません、お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。読み方が難しければ、左下 のように言っていただいても大丈夫です．")
+    motion_gen.play_motion("greeting_deep")
+    speech_gen.speech_generate("よろしくお願いします。")
+
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ２つの観光地を絞る ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-
+SectionPrint("2つの観光地に絞る・質疑応答")
 #二つの観光地を選ぶ段階---------------------------------------------------------------------------------
 title_id_json = dict(zip(sightID_ls, sightTitle_ls))
 choice_two_spot_prompt = f'''
@@ -394,22 +453,22 @@ choice_two_spot_prompt = f'''
         余計な文言を書かず、配列のみで、
         もし文章からは判断できなければ
         []
-        のように空の配列で出力して。
+        のように空の配列で出力してください。
     '''
 while True:
-    user_input_text = voice_recog.recognize()
+    user_input_text = voice_recog.recognize_speach()
     user_input_text_ls.append(user_input_text)
     response_text = RobotNLG.GPT4(user_input_text,choice_two_spot_prompt,[])
     trg2spotid = eval(response_text)
-    print("得られたIDのリスト：",trg2spotid)
+    print("得られたIDのリスト:",trg2spotid)
     if len(trg2spotid) == 2:
         break
     elif len(trg2spotid) <= 1:
-        speach_text = "すみません,2つを選んでください。もう一度お願いします。"
+        speach_text = "すみません,2つを選んでください。右上などと言っても大丈夫ですよ。もう一度お願いします。"
     elif len(trg2spotid) > 2:
-        speach_text = "すみません,2つに絞ってください。もう一度お願いします。"
+        speach_text = "すみません,2つに絞ってください。右下などと言っても大丈夫ですよ。もう一度お願いします。"
     else:
-        speach_text = "すみません,理解できませんでした。もう一度お願いします。"
+        speach_text = "すみません,理解できませんでした。下二つなどでも大丈夫ですよ。もう一度お願いします。"
     speech_gen.speech_generate(speach_text)
     system_output_text_ls.append(speach_text)
     check_time_exceeded(start_time)
@@ -424,6 +483,7 @@ Dialog_mongodb.update_data(unique_id,User_going_spot)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 経路作成 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
+SectionPrint("経路作成")
 lat1, long1 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[0])
 lat2, long2 = Sightseeing_mongodb.get_coordinates_by_sight_id(trg2spotid[1])
 NAVITME_serach = NAVITME(config,lat1, long1, lat2, long2)
@@ -437,92 +497,108 @@ with open(route_search_prompt_path, 'r', encoding='utf-8') as f:
 def async_speach_spot(trg2spotTitle):
     speach_t = f"ありがとうございます。お客様が行きたいスポットは{trg2spotTitle[0]}と{trg2spotTitle[1]}ですね。"
     speech_gen.speech_generate(speach_t)
-    speach_t = "それではこの店から出発し、公共交通機関で観光地を巡り、帰ってくるプランを検索いたします。少しお待ちください。"
+    speach_t = "それでは明日はちじにこの店から出発し、公共交通機関で観光地を巡り、いちにちで帰ってくるプランを作成します。少しお待ちください。"
     speech_gen.speech_generate(speach_t)
 
-def async_search_route():
+def async_search_route(trg2spotTitle):
     global journey_ls
-    journey_ls = NAVITME_serach.get_route_text(0)#この0は候補の番目
+    global total_move_time_minutes
+    journey_ls,total_move_time_minutes = NAVITME_serach.get_route_text(0,trg2spotTitle)#この0は候補の番目
     print("NAVITIME> Serach route done!")
 
 #並列処理--------------------------------------------------------------------------------------------
 start_point, end_point = "JTBユニモール名古屋", "JTBユニモール名古屋"
 print("-------------start multi-thread processing (speach and serach route)-------------")
 thread1 = threading.Thread(target=async_speach_spot, args=(trg2spotTitle,))
-thread2 = threading.Thread(target=async_search_route, args=())
+thread2 = threading.Thread(target=async_search_route, args=(trg2spotTitle,))
 # スレッドを開始
 thread1.start()
 thread2.start()
-# ここで、両方のスレッドが終了するのを待ちます
-thread1.join()
-thread2.join()
+# # ここで、両方のスレッドが終了するのを待ちます
 
-route_info_json = {
-        "start_end_spot":[start_point,end_point],
-        "via_spot":trg2spotTitle,
-        "route_desc":journey_ls,
-}
+thread2.join()
+start_end_str = str([start_point, end_point])
+route_info_str = str(journey_ls)
+
 past_messages = []
 
 #経路について発話
 response_queue = queue.Queue()
-speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, user_input_text, desc_4spot_prompt, user_input_log_desc4spot))
+speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, start_end_str + "\n" + route_info_str, routeInfo_prompt_text, []))
 speech_thread.start()
-
+thread1.join()
 stop_generation = False
 async_speech_generate()
+
+speech_thread.join()
+print("total_move_time_minutes:",total_move_time_minutes)
+hours = total_move_time_minutes // 60  # 分を60で割った商が時間数
+minutes = total_move_time_minutes % 60  # 分を60で割った余りが分数
+
+# print(f'移動の合計時間は{hours}時間{minutes}分')
 # yield_speech_message(RobotNLG.yield_GPT4_message, str(route_info_json), routeInfo_prompt_text, past_messages)
+speech_gen.speech_generate(f'移動の合計時間は{hours}時間{minutes}分なので，それぞれの観光地に十分滞在することができますよ！楽しんでください！')
 
-
-## 対話ログを追加--------------------------------------------------------------------------------------------
-# user_text_json = {
-#     "User_text":user_input_text_ls
-# }
-# system_text_json = {
-#     "System_text":system_output_text_ls
-# }
-# Dialog_mongodb.update_data(unique_id,user_text_json)
-# Dialog_mongodb.update_data(unique_id,system_text_json)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 根拠に基づく推薦事後対話 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-speech_gen.speech_generate("以上が今回おすすめする観光プランになります。何か質問あれば何でも聞いてください！")
+SectionPrint("最後の質疑応答")
 reco_after_prompt = f"""
     あなたは旅行代理店の接客のプロです。
     この度のお客様は京都市内の観光を目的としてご来店されました。
-    対話の結果お客さんは以下の観光地を経由する旅行になりました。
+    
+    接客の結果お客さんは以下の観光地を経由する旅行になりました。
     {trg2spotTitle}
     出発地は{start_point} で、到着地は、{end_point}です。
     そしてこれらの観光地に以下の道順でいくことも決まっています。
     {journey_ls}
+    移動時間は{hours}時間{minutes}分です。
+    
     これらの情報をもとに、今からお客様からの質疑応答があるので適切に回答し、接客を行ってください。
-    文章は1文程度で簡潔に答え、相手が応答できない形で終えてください。つまり、話題を終える会話をすることです。
+    もし質問がない場合でも，何か別の京都に関する話題を振って会話を続けていってください．
+    
+    出力する文の長さは短くして、文章も2ー3文程度で相手を圧倒しないようにしてください。
+    決して，「また」と出力しないようにしてください．
+    決して箇条書きによる出力はしてはいけません．
+    決してあなた自身で問答をする形式の出力をはやめてください．
+
+    それでは接客を始めます
 """
 
 user_input_log_after_recommend = [{"role": "system", "content":reco_after_prompt}]
-
-while True:
-    user_input_text = voice_recog.recognize()
-    user_input_log_after_recommend.append({"role": "user", "content":user_input_text})
-    
-    response_queue = queue.Queue()
-    speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, user_input_text, str(reco_after_prompt), user_input_log_after_recommend))
-    speech_thread.start()
-    stop_generation = False
-    async_speech_generate()
-    
-    user_input_log_after_recommend.append({"role": "assistant", "content":speech_gen})
-    
-    #終了シグナルの判定
-    if check_time_exceeded(start_time,threshold_minutes=10):
-        break
-    speech_gen.speech_generate("他に質問ありますでしょうか")
+speech_gen.speech_generate("以上が今回おすすめする観光プランになります。")
+if not check_time_exceeded(start_time, threshold_minutes=10):
+    speech_gen.speech_generate("何か質問あれば何でもお答えできます！いかがでしょうか")
+    while True:
+        user_input_text = voice_recog.recognize_speach()
+        user_input_log_after_recommend.append({"role": "user", "content":user_input_text})
+        
+        response_queue = queue.Queue()
+        speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, user_input_text, str(reco_after_prompt), user_input_log_after_recommend))
+        judge_any_question_thread = threading.Thread(target=async_judge_any_question,args=(user_input_text,))
+        speech_thread.start()
+        judge_any_question_thread.start()
+        stop_generation = False
+        async_speech_generate()
+        check_time_exceeded(start_time)
+        user_input_log_after_recommend.append({"role": "assistant", "content":response_text})
+        judge_any_question_thread.join()
+        #終了シグナルの判定
+        if check_time_exceeded(start_time,threshold_minutes=10):
+            break
+        if judge_any_question:
+            break
+        speech_gen.speech_generate("他に質問はありますか？")
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 終わりの挨拶 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-motion_gen.play_motion("greeting_deep")
-speech_gen.speech_generate("申し訳ありません、非常に名残惜しいですが、お時間となってしまいました。以上で案内を終了します。ありがとうございました。")
 
+speech_gen.speech_generate("申し訳ありません、非常に名残惜しいですが、お時間となってしまいました。以上で案内を終了します。 良い旅をお過ごしください！")
+motion_gen.play_motion("greeting_deep")
+speech_gen.speech_generate("ありがとうございました。")
+
+# NLUサーバとの接続終了
+socket_conn_NLU.send_data(str([unique_id,"終了"]))
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 会話終了後の処理 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================

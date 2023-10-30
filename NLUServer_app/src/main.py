@@ -41,8 +41,14 @@ while True:
             res = text_nlu.NLU_GPT4(received_text,prompt_text,[])
             # input_text_ls.append({"role": "user", "content":received_text})
             print(res, flush=True)
-            # 正規表現を使用して中括弧で囲まれた部分を抽出
-            res = new_text = re.sub(r'[^{]*({[^}]*})[^{]*', r'\1', res)
-            mongo_db.update_data(unique_id,json.loads(res))
-            
-            connection.close()
+
+            try:
+                # 正規表現を使用して中括弧で囲まれた部分を抽出
+                res = re.sub(r'[^{]*({[^}]*})[^{]*', r'\1', res)
+                # JSONのデコードを試みる
+                decoded_json = json.loads(res)
+                # デコードに成功した場合のみupdate_dataを実行
+                mongo_db.update_data(unique_id, decoded_json)
+            except json.decoder.JSONDecodeError as e:
+                print(f"JSON Decode Error: {e}")
+                pass

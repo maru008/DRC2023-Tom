@@ -28,8 +28,9 @@ class ConversationSignalHandler:
                     print("Connection closed by the client.")
                     break
                 print("data received now")
+                print(data)
                 decoded_data = data.decode('utf-8')
-                
+                print()
                 # JSON形式であるかを確認
                 parsed_data = json.loads(decoded_data)
                 if parsed_data.get("conversation_rule") == "CONVERSATION_START":
