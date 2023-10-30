@@ -14,6 +14,8 @@ Sightseeing_Spot_data/src/kyoto_SightseeingSpot_map.html
 #テストファイル
 Dialog_app/src/System_tests/
 Dialog_app/src/test_*.py
+
+#デモ・動画ファイル
 movie/
 #以降pythonデフォルト==============================
 # Byte-compiled / optimized / DLL files
