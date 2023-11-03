@@ -12,9 +12,10 @@ import traceback
 from DialogModules.Add_Hesitation import add_hesitation
 
 class SpeechGeneration(Base):
-    def __init__(self, DIALOG_MODE,ADD_HESITATION,ip, port):
+    def __init__(self, DIALOG_MODE,ADD_HESITATION,ip, port, Dialog_mongodb):
         super().__init__(DIALOG_MODE,ip, int(port))
         self.DIALOG_MODE = DIALOG_MODE
+        self.Dialog_mongodb = Dialog_mongodb
         self.config = {
             "engine": "POLLY-SSML",
             "speaker": "Mizuki",
@@ -69,6 +70,7 @@ class SpeechGeneration(Base):
 
     def speech_generate(self, sentence, volume=""):
         print("System>",sentence)
+        self.Dialog_mongodb.add_to_dialog_log("assistant",sentence)
         if self.DIALOG_MODE == "console_dialog":
             return None
         # 1. 送信データ作成

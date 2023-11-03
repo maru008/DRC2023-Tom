@@ -151,7 +151,10 @@ class SightseeingDBHandler:
             return float(result["LatitudeW10"]), float(result["LongitudeW10"])
         else:
             return None
-          
+     
+     
+     
+     
 def generate_combinations(conditions):
     # 空のリストを持つキーを削除する
     conditions = {key: val for key, val in conditions.items() if val}

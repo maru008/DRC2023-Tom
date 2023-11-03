@@ -50,8 +50,8 @@ else:
 #===================================================================================================
 print("Connecting to Database...")
 Dialog_mongodb = MongoDB('DRC2023_Dialog_DB') #クラス呼び出し
-unique_id = Dialog_mongodb.get_unique_collection_name() #コレクション名の取得
-Dialog_mongodb.insert_initial_data(unique_id) #初期データの追加
+unique_id = Dialog_mongodb.get_unique_collection_name() #コレクション名の取得 -> unique_idへ
+Dialog_mongodb.insert_initial_data() #初期データの追加
 #観光地MongoDBの用意
 if check_db_exists("Sightseeing_Spot_DB") == False:
     sys.exit("観光地データベースを用意してください")
@@ -59,10 +59,10 @@ Sightseeing_mongodb = SightseeingDBHandler("Sightseeing_Spot_DB")
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ロボットサーバ準備 ++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-speech_gen = SpeechGeneration(DIALOG_MODE,ADD_HESITATION,IP,config.get("Server_Info","SpeechGenerator_port"))
+speech_gen = SpeechGeneration(DIALOG_MODE,ADD_HESITATION,IP,config.get("Server_Info","SpeechGenerator_port"),Dialog_mongodb)
 face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
-voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"),motion_gen)
+voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"),motion_gen,Dialog_mongodb)
 sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
 TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
 
@@ -214,11 +214,11 @@ while True:
     user_input_log_firstContact.append({"role": "assistant", "content":response_text})
     #===================================================================================================
     # 現状のNLUの結果を出力
-    Dialog_mongodb.print_collection_data(unique_id)
+    Dialog_mongodb.print_collection_data()
     #===================================================================================================
     #観光地絞り込みを行う
     ## 対話DBから現状のJSONを獲得
-    data_as_json = Dialog_mongodb.fetch_data_by_id(unique_id)
+    data_as_json = Dialog_mongodb.fetch_data_by_id()
     #基準とするコードの作成
     #観光地DBへ検索
     all_combinations = generate_combinations(data_as_json)
@@ -457,7 +457,7 @@ trg2spotTitle = [Sightseeing_mongodb.get_title_by_sight_id(sightID_i) for sightI
 User_going_spot = {
     "User_going_spot":trg2spotTitle
 }
-Dialog_mongodb.update_data(unique_id,User_going_spot)
+Dialog_mongodb.update_data(User_going_spot)
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 経路作成 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -583,4 +583,4 @@ socket_conn_NLU.send_data(str([unique_id,"終了"]))
 
 SectionPrint("NLU結果出力")
 # # 会話の終了後、作成されたMongoDBのデータを出力
-Dialog_mongodb.print_collection_data(unique_id)
+Dialog_mongodb.print_collection_data()
