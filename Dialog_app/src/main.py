@@ -44,14 +44,6 @@ elif user_input_val == "n":
     SectionPrint("ロボット対話モード")
 else:
     sys.exit('正しく入力してください')
-#　システムチェックでAPIを使わないのためのコマンド
-
-# console_input = input("GPTのAPIを使いますか?(使わない場合おうむ返しになります)(y/n):")
-# if console_input == "n":
-#     USE_GPT_API = False
-# console_input = input("いい淀みを付与しますか？:(y/n)")
-# if console_input == "y":
-#     ADD_HESITATION = True
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ データベース準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -70,12 +62,10 @@ Sightseeing_mongodb = SightseeingDBHandler("Sightseeing_Spot_DB")
 speech_gen = SpeechGeneration(DIALOG_MODE,ADD_HESITATION,IP,config.get("Server_Info","SpeechGenerator_port"))
 face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
-voice_recog = VoiceRecognition(DIALOG_MODE,"192.168.0.4",config.get("Server_Info","SpeechRecognition_port"),motion_gen)#名古屋
-# voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"),motion_gen)
-# sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
-sight_view = SightViewTCPServer(DIALOG_MODE,"192.168.0.5",config.get("Server_Info","SiteViewer_port"))#名古屋
-# TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
-TCP_server = ConversationSignalHandler(DIALOG_MODE,"192.168.0.3",8001)#名古屋
+voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"),motion_gen)
+sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
+TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
+
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 自前サーバ準備 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -124,7 +114,7 @@ def yield_speech_message(generator_function, user_input_text, ChatGPT_prompt_tex
 
 def async_send_data(data):
     socket_conn_NLU.send_data(data)
-    print("finish thread:  async_send_data")
+    # print("finish thread:  async_send_data")
 
 def async_speech_generate():
     global response_queue
@@ -133,9 +123,8 @@ def async_speech_generate():
         if not response_queue.empty():
             response_text = response_queue.get()
             speech_gen.speech_generate(response_text)
-            print("System>",response_text)
             # time.sleep(1)
-    print("finish thread:  async_speech_generate ")
+    # print("finish thread:  async_speech_generate ")
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 対話開始 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -159,11 +148,7 @@ SectionPrint("対話開始")
 start_time = datetime.datetime.now()
 #お辞儀
 motion_gen.play_motion("greeting_deep")
-speach_t = """こんにちは！旅行代理店ロボットのあいです。
-                今回お客様は京都への旅行を考えていると聞きました。
-                私との会話でお客様に最適な観光地を見つけるお手伝いをします！
-                何か旅行で体験したいことなどを教えて下さい。
-                決まっていなくても大丈夫です。"""
+speach_t = "こんにちは！旅行代理店ロボットのあいです。今回お客様は京都への旅行を考えていると聞きました。私との会話でお客様に最適な観光地を見つけるお手伝いをします！何か旅行で体験したいことなどを教えて下さい。決まっていなくても大丈夫です。"
 # speach_t = ""
 speech_gen.speech_generate(speach_t)
 system_output_text_ls.append(speach_t)
@@ -193,15 +178,6 @@ while True:
     
     user_input_text = voice_recog.recognize_speach()
     
-    # voice_recog.listen_once()
-    # while True:
-    #     if not voice_recog.received_stack:
-    #         time.sleep(0.1)
-    #         continue
-    #     user_input_json = voice_recog.received_stack.pop(0)
-    #     if user_input_json["type"] in ["silent", "final", "failed"]:
-    #         break
-    # user_input_text = user_input_json["user_utterance"]
     user_input_log_firstContact.append({"role": "user", "content":user_input_text})
     if Judge_change_subject_bool:
         user_input_log_firstContact = [{"role": "system", "content":ChatGPT_prompt_text}]
@@ -229,7 +205,7 @@ while True:
     
     speech_thread.join()
     send_data_thread.join()
-    print("join done")
+    
     ## ユーザとロボットのテキスト追加
     user_input_text_ls.append(user_input_text)
     system_output_text_ls.append(response_text)
@@ -252,12 +228,14 @@ while True:
             condition_json = json.dumps(combination)
             sight_ids = Sightseeing_mongodb.get_sight_ids_by_multiple_conditions(condition_json)
             if len(sight_ids) >= 1 and len(sight_ids) < 100:
-                print("対象クエリ:",combination)
-                print("結果観光地数:",len(sight_ids))
+                print("クエリ:",combination)
+                print("---> 結果観光地数:",len(sight_ids))
                 resulting_sight_id_mtx.append(sight_ids)
-                print("-------------------------------")
+                
             already_serach_json.append(str(combination))
-    print(resulting_sight_id_mtx)
+    print("-"*100)
+    print("観光地カテゴリ数: ",len(resulting_sight_id_mtx)," 総観光地数: ",len(set(element for row in resulting_sight_id_mtx for element in row)))
+    print("-"*100)
     #===================================================================================================
     # 次のフェーズへ行くかどうかの判定
     if Judge_break_bool:
@@ -269,7 +247,7 @@ while True:
     #         speech_gen.speech_generate(response_text)
     #         #chatgptのログを初期化（最大トークン数エラーを回避するため）
     # 時間表示
-    print("---------------------------------")
+    
     check_time_exceeded(start_time)
 result_user_json = data_as_json
 SectionPrint("4つの観光地推薦・説明")

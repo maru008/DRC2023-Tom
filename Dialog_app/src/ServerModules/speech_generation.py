@@ -1,6 +1,6 @@
 import sys
 import os
-
+import time
 current_dir = os.path.dirname(os.path.abspath(__file__))
 dialog_modules_dir = os.path.join(current_dir, '..', 'DialogModules')
 sys.path.append(dialog_modules_dir)
@@ -14,7 +14,7 @@ from DialogModules.Add_Hesitation import add_hesitation
 class SpeechGeneration(Base):
     def __init__(self, DIALOG_MODE,ADD_HESITATION,ip, port):
         super().__init__(DIALOG_MODE,ip, int(port))
-
+        self.DIALOG_MODE = DIALOG_MODE
         self.config = {
             "engine": "POLLY-SSML",
             "speaker": "Mizuki",
@@ -29,6 +29,8 @@ class SpeechGeneration(Base):
         ]
 
     def _check_result(self, received_data):
+        if self.DIALOG_MODE == "console_dialog":
+            return None
         if "result" not in received_data:
             return ""
 
@@ -48,7 +50,8 @@ class SpeechGeneration(Base):
             return ""
 
     def _wait_speaking(self):
-        print("{}:: Is speaking...".format(self.__class__.__name__))
+        if self.DIALOG_MODE == "console_dialog":
+            return None
         is_speaking = True
         while is_speaking:
             received = self.sock.recv(1024)
@@ -65,8 +68,9 @@ class SpeechGeneration(Base):
         return "success-end"
 
     def speech_generate(self, sentence, volume=""):
-        print("{}:: Play one sentence.".format(self.__class__.__name__))
         print("System>",sentence)
+        if self.DIALOG_MODE == "console_dialog":
+            return None
         # 1. 送信データ作成
         ssml_text = sentence
         for head, tail in self.ssml_option[::-1]:
@@ -95,10 +99,6 @@ class SpeechGeneration(Base):
                 continue
 
         return deepcopy({"result": result, "failed_count": failed_count})
-
-    def print_one_sentence(self, sentence):
-        # print("{}:: Print one sentence.".format(self.__class__.__name__))
-        print("{}:: {}".format(self.__class__.__name__, sentence))
 
     # def __init__(self, , ip, port):
     #     self.DIALOG_MODE = DIALOG_MODE
