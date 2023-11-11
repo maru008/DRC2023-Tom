@@ -485,7 +485,7 @@ def async_search_route(trg2spotTitle):
     print("NAVITIME> Serach route done!")
 
 #並列処理--------------------------------------------------------------------------------------------
-start_point, end_point = "JTBユニモール名古屋", "JTBユニモール名古屋"
+start_point, end_point = "JTBトラベルゲート天神", "JTBトラベルゲート天神"
 print("-------------start multi-thread processing (speach and serach route)-------------")
 thread1 = threading.Thread(target=async_speach_spot, args=(trg2spotTitle,))
 thread2 = threading.Thread(target=async_search_route, args=(trg2spotTitle,))
@@ -513,9 +513,10 @@ print("total_move_time_minutes:",total_move_time_minutes)
 hours = total_move_time_minutes // 60  # 分を60で割った商が時間数
 minutes = total_move_time_minutes % 60  # 分を60で割った余りが分数
 
-# print(f'移動の合計時間は{hours}時間{minutes}分')
-# yield_speech_message(RobotNLG.yield_GPT4_message, str(route_info_json), routeInfo_prompt_text, past_messages)
-speech_gen.speech_generate(f'移動の合計時間は{hours}時間{minutes}分なので，それぞれの観光地に十分滞在することができますよ！楽しんでください！')
+if hours <= 5:
+    speech_gen.speech_generate(f'移動の合計時間は{hours}時間{minutes}分なので，それぞれの観光地に十分滞在することができますよ！楽しんでください！')
+else:
+    speech_gen.speech_generate(f'移動の合計時間は{hours}時間{minutes}分なので，少し忙しいですが，それぞれの観光地に十分滞在することができますよ！楽しんでください！')
 
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 根拠に基づく推薦事後対話 ++++++++++++++++++++++++++++++++++++++++++++++++++

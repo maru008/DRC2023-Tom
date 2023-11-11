@@ -4,7 +4,7 @@ import datetime
 
 today = datetime.datetime.utcnow().date()  # 現在のUTC日付を取得
 tomorrow = today + datetime.timedelta(days=1)  # 明日の日付を計算
-fixed_time = datetime.datetime(tomorrow.year, tomorrow.month, tomorrow.day, 8, 0)  # 明日の八時に固定
+fixed_time = datetime.datetime(tomorrow.year, tomorrow.month, tomorrow.day, 7, 0)  # 明日の7時に固定
 
 formatted_time = fixed_time.strftime('%Y-%m-%dT%H:%M:%S') 
 
@@ -98,8 +98,6 @@ def format_journey(data,trg_i,spot_title_ls):
                 # 現在の旅程をリストに追加し、新しい旅程を開始
                 if journey:  # journeyが空でない場合のみ追加
                     journeys.append(journey.strip())  # 最後の改行を削除
-                print(journey)
-                print("-"*20)
                 journey = ""
                 
 
@@ -112,5 +110,5 @@ def format_journey(data,trg_i,spot_title_ls):
     # 最後の旅程をリストに追加
     if journey:  # journeyが空でない場合のみ追加
         journeys.append(journey.strip())  # 最後の改行を削除
-
+    
     return journeys, total_move_time_minutes
