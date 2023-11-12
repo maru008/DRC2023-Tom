@@ -14,7 +14,7 @@ def import_data_to_mongodb(data, collection):
         collection.insert_one(item)
 
 # JSONファイルのパスを指定
-filename = "../../../Sightseeing_Spot_data/data/output_data/RURUBU_results_KyotoCity.json"
+filename = "../../../Sightseeing_Spot_data/data/output_data/RURUBU_results_KyotoCity_for_DRC2023.json"
 
 # JSONファイルからデータを読み込む
 data = read_json_file(filename)
