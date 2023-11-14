@@ -35,16 +35,16 @@ ADD_HESITATION = False
 #===================================================================================================
 config = read_config()
 IP = config.get("Server_Info","Server_ip")
-user_input_val = sys.argv[1]
-if user_input_val == "y":
-    DIALOG_MODE = "console_dialog"
-    SectionPrint("コンソール対話モード")
-elif user_input_val == "n":
-    DIALOG_MODE = "robot_dialog"
-    SectionPrint("ロボット対話モード")
-else:
-    sys.exit('正しく入力してください')
-
+# user_input_val = sys.argv[1]
+# if user_input_val == "y":
+#     DIALOG_MODE = "console_dialog"
+#     SectionPrint("コンソール対話モード")
+# elif user_input_val == "n":
+#     DIALOG_MODE = "robot_dialog"
+#     SectionPrint("ロボット対話モード")
+# else:
+#     sys.exit('正しく入力してください')
+DIALOG_MODE = "robot_dialog"
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ データベース準備 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -62,8 +62,8 @@ Sightseeing_mongodb = SightseeingDBHandler("Sightseeing_Spot_DB")
 speech_gen = SpeechGeneration(DIALOG_MODE,ADD_HESITATION,IP,config.get("Server_Info","SpeechGenerator_port"),Dialog_mongodb)
 face_gen = ExpressionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotExpressionController_port"))
 motion_gen = MotionGeneration(DIALOG_MODE,IP,config.get("Server_Info","RobotBodyController_port"))
-voice_recog = VoiceRecognition(DIALOG_MODE,IP,config.get("Server_Info","SpeechRecognition_port"),motion_gen,Dialog_mongodb)
-sight_view = SightViewTCPServer(DIALOG_MODE,IP,config.get("Server_Info","SiteViewer_port"))
+voice_recog = VoiceRecognition(DIALOG_MODE,"192.168.0.46",config.get("Server_Info","SpeechRecognition_port"),motion_gen,Dialog_mongodb)#福岡
+sight_view = SightViewTCPServer(DIALOG_MODE,"192.168.0.37",config.get("Server_Info","SiteViewer_port"))#福岡
 TCP_server = ConversationSignalHandler(DIALOG_MODE,IP,config.get("Server_Info","TCPServer_port"))
 
 #===================================================================================================
@@ -148,7 +148,7 @@ SectionPrint("対話開始")
 start_time = datetime.datetime.now()
 #お辞儀
 motion_gen.play_motion("greeting_deep")
-speach_t = "こんにちは！旅行代理店ロボットのあいです。今回お客様は京都への旅行を考えていると聞きました。私との会話でお客様に最適な観光地を見つけるお手伝いをします！何か旅行で体験したいことなどを教えて下さい。決まっていなくても大丈夫です。"
+speach_t = "こんにちは！旅行代理店ロボットのしょうこです。今回お客様は京都への旅行を考えていると聞きました。私との会話でお客様に最適な観光地を見つけるお手伝いをします！何か旅行で体験したいことなどを教えて下さい。決まっていなくても大丈夫です。"
 # speach_t = ""
 speech_gen.speech_generate(speach_t)
 system_output_text_ls.append(speach_t)
@@ -254,6 +254,7 @@ SectionPrint("4つの観光地推薦・説明")
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
+sight_id_lengths = [len(sublist) for sublist in resulting_sight_id_mtx]
 
 # 配列から4つを選ぶ----------------------------------------------------------------------------------------
 print("select 4 spot...",end="")
@@ -272,13 +273,16 @@ def async_speach_json_result(Select4_Bool,sightID_ls):
     speach_t ="ありがとうございます。今回の旅行がどういうものか、そしてあなたがどんな人かわかりました！"
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
+    
     if not Select4_Bool:
-        speach_t = """ただ，申し訳ありません。
+        if sight_id_lengths == 0:
+            speach_t = """ただ，申し訳ありません。
                       私の実力不足でお客様に合致した観光地を見つけることができませんでした。
                       私ももっと学ばなければいけません。
                       今回は京都市内でおすすめの観光地をいくつかピックアップさせていただきます。
                       どこも魅力的なので安心してください。"""
-        result_user_json = {}
+        else:
+            speach_t = f"ただ，申し訳ありません。私の実力不足でお客様に合致した観光地を{sight_id_lengths}つしか見つけることができませんでした。私ももっと学ばなければいけません。残りの{4-sight_id_lengths}は京都市内でおすすめの観光地をいくつかピックアップさせていただきます。"
         speech_gen.speech_generate(speach_t)
         system_output_text_ls.append(speach_t)
     else:
