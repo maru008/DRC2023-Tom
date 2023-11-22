@@ -148,7 +148,7 @@ SectionPrint("対話開始")
 start_time = datetime.datetime.now()
 #お辞儀
 motion_gen.play_motion("greeting_deep")
-speach_t = "こんにちは！旅行代理店ロボットのしょうこです。今回お客様は京都への旅行を考えていると聞きました。私との会話でお客様に最適な観光地を見つけるお手伝いをします！何か旅行で体験したいことなどを教えて下さい。決まっていなくても大丈夫です。"
+speach_t = "こんにちは！旅行代理店ロボットのあいです。今回お客様は京都への旅行を考えていると聞きました。私との会話でお客様に最適な観光地を見つけるお手伝いをします！何か旅行で体験したいことなどを教えて下さい。決まっていなくても大丈夫です。"
 # speach_t = ""
 speech_gen.speech_generate(speach_t)
 system_output_text_ls.append(speach_t)
@@ -254,7 +254,7 @@ SectionPrint("4つの観光地推薦・説明")
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ 4つの観光地を説明する ++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-sight_id_lengths = [len(sublist) for sublist in resulting_sight_id_mtx]
+sight_id_lengths = int(sum([len(sublist) for sublist in resulting_sight_id_mtx]))
 
 # 配列から4つを選ぶ----------------------------------------------------------------------------------------
 print("select 4 spot...",end="")
@@ -269,7 +269,7 @@ print("選ばれた観光地リスト: ",sightTitle_ls)
 # ・thread3：観光地説明の要約生成 async_generate_spot_desc -> spot_desc_text_lsを更新
 spot_desc_text_ls = []
 now_screen_state = []
-def async_speach_json_result(Select4_Bool,sightID_ls):
+def async_speach_json_result(Select4_Bool,sightID_ls,sight_id_lengths):
     speach_t ="ありがとうございます。今回の旅行がどういうものか、そしてあなたがどんな人かわかりました！"
     speech_gen.speech_generate(speach_t)
     system_output_text_ls.append(speach_t)
@@ -319,7 +319,7 @@ def async_generate_spot_desc(sightID_ls,sightTitle_ls):
 sightDesc_ls = [Sightseeing_mongodb.get_summary_by_sight_id(sightID_i) for sightID_i in sightID_ls]
 
 # 並列処理開始-------------------------------------------------------------------------------------
-thread1 = threading.Thread(target=async_speach_json_result, args=(Select4_Bool,sightID_ls))
+thread1 = threading.Thread(target=async_speach_json_result, args=(Select4_Bool,sightID_ls,sight_id_lengths))
 thread2 = threading.Thread(target=async_generate_spot_reason, args=(sightTitle_ls,result_user_json,))
 thread3 = threading.Thread(target=async_generate_spot_desc, args=(sightID_ls,sightTitle_ls))
 thread1.start()
@@ -344,23 +344,25 @@ for desc_i in spot_desc_text_ls:
 #===================================================================================================
 # +++++++++++++++++++++++++++++++ ４つの観光地について質疑応答を受ける +++++++++++++++++++++++++++++++++++
 #===================================================================================================
+sopt4_str = '、'.join(sightTitle_ls)
 desc_4spot_prompt = f"""
     あなたは旅行代理店の接客のプロです。
     この度のお客様は京都市内の観光を目的としてご来店されました。
     
     今、お客様は4つの観光地で悩んでいます。
-    4つのスポットは{"、".join(sightTitle_ls)}であり、その説明は以下です。
-    {spot_desc_text_ls}
-    お客様がこれらの観光地について質問をしようとしているので，上の説明を参考に適切に対応してください．
-    ただし，これらの観光地を正しく発話できるわけではないので，それを加味して理解して．
+    4つのスポットは{sopt4_str}です。
+    
+    お客様がこれらの観光地について質問をしようとしているので，持っているそれぞれの観光地の知識で適切に対応してください．
+    ただし，これらの観光地を正しく発話できるわけではないので，それを加味して理解してください．
     入力はこれらの観光地に関する質問のみです。
-
     
     箇条書きや掛け合いの文書など発話としておかしな出力はしないでください．
     出力する文の長さは短くして、文章も2から3文程度で相手を圧倒しないようにしてください。
     決して，「また」と出力しないようにしてください．
     決して箇条書きによる出力はしてはいけません．
     決してあなた自身で問答をする形式の出力をはやめてください．
+    
+    決して京都以外の話をするのはやめてください．
     
     それでは接客を開始します。
 """
@@ -383,7 +385,7 @@ next_step_break_minutes = 6.5
 if not check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes):
     speach_t = "以上が4つの観光地の説明です。少し説明が長かったですね。何か質問あればなんでもお答えできますよ。いかがでしょうか"
     speech_gen.speech_generate(speach_t)
-
+    response_queue = queue.Queue()
     user_input_log_desc4spot = []
     while True:
         if check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes):
@@ -392,11 +394,11 @@ if not check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes)
             break
         else:
             user_input_text = voice_recog.recognize_speach()
-            user_input_log_desc4spot.append({"role": "user", "content":user_input_text})
             
-            response_queue = queue.Queue()
             speech_thread = threading.Thread(target=yield_speech_message, args=(RobotNLG.yield_GPT4_message, user_input_text, desc_4spot_prompt, user_input_log_desc4spot))
+            
             judge_any_question_thread = threading.Thread(target=async_judge_any_question,args=(user_input_text,))
+            
             speech_thread.start()
             judge_any_question_thread.start()
             stop_generation = False
@@ -404,19 +406,18 @@ if not check_time_exceeded(start_time,threshold_minutes=next_step_break_minutes)
             
             speech_thread.join()
             judge_any_question_thread.join()
-            
+            user_input_log_desc4spot.append({"role": "user", "content":user_input_text})
             if judge_any_question:
                 speech_gen.speech_generate("質問は解消されたようですね。")
                 break
-            print(response_text)
             user_input_log_desc4spot.append({"role": "assistant", "content":response_text})
     
-    speech_gen.speech_generate("それではどの2つの観光地に行くかを選んでいただきたいです。読み方が難しければ、上二つのように言言っていただいても大丈夫です．")
+    speech_gen.speech_generate("それではどの2つの観光地に行くかを選んでいただきたいです。読み方が難しければ、うえ二つのように言っていただいても大丈夫です．")
     motion_gen.play_motion("greeting_deep")
     speech_gen.speech_generate("よろしくお願いします。")
     
 else:
-    speech_gen.speech_generate("申し訳ありません、お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。読み方が難しければ、左下 のように言っていただいても大丈夫です．")
+    speech_gen.speech_generate("申し訳ありません、お時間が迫っているようですのでこの中から2つの観光地に行くかを選んでいただきたいです。読み方が難しければ、ひだりうえのように言っていただいても大丈夫です．")
     motion_gen.play_motion("greeting_deep")
     speech_gen.speech_generate("よろしくお願いします。")
 
@@ -446,11 +447,11 @@ while True:
     if len(trg2spotid) == 2:
         break
     elif len(trg2spotid) <= 1:
-        speach_text = "すみません,2つを選んでください。右上などと言っても大丈夫ですよ。もう一度お願いします。"
+        speach_text = "すみません,2つを選んでください。みぎうえなどと言っても大丈夫ですよ。もう一度お願いします。"
     elif len(trg2spotid) > 2:
-        speach_text = "すみません,2つに絞ってください。右下などと言っても大丈夫ですよ。もう一度お願いします。"
+        speach_text = "すみません,2つに絞ってください。みぎしたなどと言っても大丈夫ですよ。もう一度お願いします。"
     else:
-        speach_text = "すみません,理解できませんでした。下二つなどでも大丈夫ですよ。もう一度お願いします。"
+        speach_text = "すみません,理解できませんでした。したふたつなどでも大丈夫ですよ。もう一度お願いします。"
     speech_gen.speech_generate(speach_text)
     system_output_text_ls.append(speach_text)
     check_time_exceeded(start_time)

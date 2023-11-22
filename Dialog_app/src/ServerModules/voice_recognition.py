@@ -35,7 +35,7 @@ class VoiceRecognition(Base):
                     final_results.append(result["user_utterance"])
                     start_time = time.time()  # 現在の時間を記録
                     while True:
-                        if time.time() - start_time > 1.5:  # n秒以上経過したか確認
+                        if time.time() - start_time > 1:  # n秒以上経過したか確認
                             break  # 2秒以上経っていれば、whileループを抜ける
 
                         # 新しいデータがあるかどうかを確認する
