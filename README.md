@@ -1,9 +1,12 @@
 # 旅行代理店対話ロボットシステム (in DRC2023)
 in DRC2023, Team Tom
 # 概要
+２つのLLMを非同期的に動かし，対話を行うシステムです．
+詳細は[こちら](https://arxiv.org/abs/2312.13925)の論文に記述されています．
 
 # 提案システム
 非同期的に対話進行を行う Dual Large Language Model for Dialog system アーキテクチャ
+<img width="665" alt="image" src="https://github.com/maru008/DRC2023-Tom/assets/51712520/fec49335-9072-4b87-8147-6a2c9a549967">
 
 # 実行
 ## 環境
